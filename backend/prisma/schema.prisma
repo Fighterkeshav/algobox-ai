@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roadmapNodes RoadmapNode[]
+  algoRuns     AlgoRun[]
+}
+
+model RoadmapNode {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  status      String   // "completed" | "in-progress" | "locked"
+  progress    Int      @default(0)
+  difficulty  String   // "beginner" | "intermediate" | "advanced"
+  estimatedTime String?
+  skills      String[] // JSON array
+  type        String?  // "visual-algorithm" for visualization nodes
+  algorithmId String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  children    RoadmapNode[] @relation("RoadmapNodeChildren")
+  parent      RoadmapNode?  @relation("RoadmapNodeChildren", fields: [parentId], references: [id])
+}
+
+model AlgoRun {
+  id         String   @id @default(cuid())
+  userId     String
+  algorithmId String
+  steps      String   // JSON string of AlgoStep[]
+  completed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -25,6 +25,8 @@ interface RoadmapNode {
   difficulty: "beginner" | "intermediate" | "advanced";
   estimatedTime: string;
   skills: string[];
+  type?: "visual-algorithm";
+  algorithmId?: string;
   children?: RoadmapNode[];
 }
 
