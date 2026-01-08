@@ -85,7 +85,6 @@ type Language = "python" | "javascript" | "cpp";
 
 export default function Practice() {
   const navigate = useNavigate();
-  const navigate = useNavigate();
   const [language, setLanguage] = useState<Language>("python");
   const [code, setCode] = useState(currentProblem.starterCode[language]);
   const [isRunning, setIsRunning] = useState(false);
