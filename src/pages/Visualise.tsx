@@ -871,7 +871,11 @@ function BinarySearchVisualization({ step }: { step: AlgoStep }) {
 }
 
 function DijkstraVisualization({ step }: { step: AlgoStep }) {
-  const { nodes, edges, distances, visited, current, updating } = step.state;
+  const { nodes, edges, distances, visited, current, updating } = step.state || {};
+
+  if (!nodes || !edges) {
+    return <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>;
+  }
 
   return (
     <svg className="w-full h-full" viewBox="0 0 500 300">
@@ -879,6 +883,7 @@ function DijkstraVisualization({ step }: { step: AlgoStep }) {
       {edges.map((edge: any, i: number) => {
         const from = nodes[edge.from];
         const to = nodes[edge.to];
+        if (!from || !to) return null;
         const midX = (from.x + to.x) / 2;
         const midY = (from.y + to.y) / 2;
 
@@ -910,7 +915,7 @@ function DijkstraVisualization({ step }: { step: AlgoStep }) {
         let fill = "hsl(var(--muted))";
         if (node.id === current) fill = "hsl(var(--primary))";
         else if (node.id === updating) fill = "hsl(47, 100%, 50%)";
-        else if (visited.includes(node.id)) fill = "hsl(142, 76%, 36%)";
+        else if (visited?.includes(node.id)) fill = "hsl(142, 76%, 36%)";
 
         return (
           <g key={node.id}>
@@ -936,7 +941,7 @@ function DijkstraVisualization({ step }: { step: AlgoStep }) {
               textAnchor="middle"
               className="text-xs fill-muted-foreground"
             >
-              d={distances[node.id] === Infinity ? "∞" : distances[node.id]}
+              d={distances?.[node.id] === Infinity ? "∞" : distances?.[node.id]}
             </text>
           </g>
         );
@@ -946,9 +951,13 @@ function DijkstraVisualization({ step }: { step: AlgoStep }) {
 }
 
 function AStarVisualization({ step }: { step: AlgoStep }) {
-  const { grid, start, end, openSet, closedSet, path, current, adding } = step.state;
+  const { grid, start, end, openSet, closedSet, path, current, adding } = step.state || {};
   const cellSize = 45;
   const gap = 2;
+
+  if (!grid || !grid.length) {
+    return <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>;
+  }
 
   return (
     <div className="flex items-center justify-center h-full">
@@ -959,19 +968,19 @@ function AStarVisualization({ step }: { step: AlgoStep }) {
 
             if (cell === 1) {
               bgColor = "bg-foreground/80";
-            } else if (path.some((p: any) => p.x === x && p.y === y)) {
+            } else if (path?.some((p: any) => p.x === x && p.y === y)) {
               bgColor = "bg-primary";
             } else if (current?.x === x && current?.y === y) {
               bgColor = "bg-yellow-500";
             } else if (adding?.x === x && adding?.y === y) {
               bgColor = "bg-blue-400";
-            } else if (x === start.x && y === start.y) {
+            } else if (x === start?.x && y === start?.y) {
               bgColor = "bg-green-500";
-            } else if (x === end.x && y === end.y) {
+            } else if (x === end?.x && y === end?.y) {
               bgColor = "bg-red-500";
-            } else if (openSet.some((n: any) => n.x === x && n.y === y)) {
+            } else if (openSet?.some((n: any) => n.x === x && n.y === y)) {
               bgColor = "bg-blue-300/50";
-            } else if (closedSet.some((n: any) => n.x === x && n.y === y)) {
+            } else if (closedSet?.some((n: any) => n.x === x && n.y === y)) {
               bgColor = "bg-muted";
             }
 
