@@ -5,13 +5,43 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// If the URL is missing, provide a safe stub that fails when used but doesn't crash on import.
+// We assign to a top-level `supabase` variable and export it once to avoid block-scoped `export` issues.
+let supabase: ReturnType<typeof createClient>;
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+if (!SUPABASE_URL) {
+  console.warn(
+    'VITE_SUPABASE_URL is not defined. Create a `.env` or `.env.local` with `VITE_SUPABASE_URL="https://your-project-ref.supabase.co"` and `VITE_SUPABASE_PUBLISHABLE_KEY="your-key"`'
+  );
+
+  // Minimal stub compatible with usage in the app (mainly `supabase.functions.invoke`).
+  const _stub = {
+    functions: {
+      invoke: async () => {
+        throw new Error(
+          'Supabase is not configured (missing VITE_SUPABASE_URL). Copy `.env.example` to `.env.local` and add your values, then restart the dev server.'
+        );
+      }
+    }
+  } as unknown as ReturnType<typeof createClient>;
+
+  supabase = _stub;
+} else {
+  if (!SUPABASE_PUBLISHABLE_KEY) {
+    // Allow server-side workflows to proceed, but warn in the browser during development.
+    console.warn('VITE_SUPABASE_PUBLISHABLE_KEY is not defined. Some browser features may not work.');
   }
-});
+
+  // Import the supabase client like this:
+  // import { supabase } from "@/integrations/supabase/client";
+
+  supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
+  });
+}
+
+export { supabase };

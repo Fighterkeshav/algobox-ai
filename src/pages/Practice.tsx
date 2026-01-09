@@ -106,16 +106,66 @@ export default function Practice() {
     }
   };
 
-  const handleRun = () => {
+  const handleRun = async () => {
     setIsRunning(true);
     setOutput(null);
-    
-    // Simulate code execution
-    setTimeout(() => {
+    setAiResponse(null);
+
+    try {
+      // Prepare tests in the format expected by the server
+      const testsPayload = testResults.map((t) => ({ input: t.input, expected: t.expected }));
+
+      // Call the Supabase function which will run Judge0 and the AI analysis
+      // Note: supabase client may be a stub if not configured; handle accordingly
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { supabase } = require("@/integrations/supabase/client");
+
+      try {
+        const { data, error } = await supabase.functions.invoke("debug-code", {
+          body: { code, language, tests: testsPayload },
+        });
+
+        if (error) {
+          console.error("Supabase function error:", error);
+          setOutput(`Error: ${error.message || JSON.stringify(error)}`);
+          toast.error("Failed to run code");
+          return;
+        }
+
+        const analysis = data?.analysis ?? null;
+        const execution = data?.execution ?? null;
+
+        // Update test results if execution provides tests
+        if (execution?.tests && Array.isArray(execution.tests)) {
+          const updated = testResults.map((t, i) => {
+            const exec = execution.tests[i];
+            return {
+              ...t,
+              passed: exec?.passed ?? null,
+            };
+          });
+          setTestResults(updated);
+        }
+
+        // Build output text
+        let out = "";
+        if (execution) {
+          out += "Execution Results:\n" + JSON.stringify(execution, null, 2) + "\n\n";
+        }
+        if (analysis) {
+          out += "AI Analysis:\n" + analysis;
+          setAiResponse(analysis);
+        }
+
+        setOutput(out || "No output returned.");
+      } catch (err: any) {
+        console.error("Error invoking debug-code:", err);
+        setOutput(`Error invoking debug-code: ${err?.message || String(err)}`);
+        toast.error("Failed to invoke debug code function");
+      }
+    } finally {
       setIsRunning(false);
-      setOutput("Running tests...\n\nTest 1: Passed ✓\nTest 2: Passed ✓\nTest 3: Passed ✓\n\nAll tests passed!");
-      setTestResults(testCases.map(tc => ({ ...tc, passed: true })));
-    }, 1500);
+    }
   };
 
   const handleReset = () => {
