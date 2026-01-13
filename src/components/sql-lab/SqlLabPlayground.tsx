@@ -17,7 +17,11 @@ const SAMPLE_QUERIES = [
     { label: "Basic SELECT", query: "SELECT * FROM users" },
     { label: "WHERE filter", query: "SELECT name, email FROM users WHERE id > 2" },
     { label: "JOIN query", query: "SELECT users.name, orders.amount FROM users JOIN orders ON users.id = orders.user_id" },
-    { label: "JOIN with filter", query: "SELECT users.name, orders.amount FROM users JOIN orders ON users.id = orders.user_id WHERE orders.amount > 500" },
+    { label: "JOIN + WHERE", query: "SELECT users.name, orders.amount FROM users JOIN orders ON users.id = orders.user_id WHERE orders.amount > 500" },
+    { label: "COUNT aggregate", query: "SELECT COUNT(*) AS total FROM orders" },
+    { label: "GROUP BY", query: "SELECT user_id, SUM(amount) AS total FROM orders GROUP BY user_id" },
+    { label: "ORDER BY", query: "SELECT name, email FROM users ORDER BY name ASC" },
+    { label: "LIMIT", query: "SELECT * FROM products ORDER BY price DESC LIMIT 5" },
 ];
 
 export function SqlLabPlayground() {

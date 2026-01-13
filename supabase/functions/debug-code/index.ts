@@ -83,79 +83,103 @@ serve(async (req) => {
           visualization = { type: 'sql', data: [] }; // Fallback
         }
       } else {
-        // Algorithm Visualization
+        // Algorithm Visualization - Enhanced for ALL problem types
         const systemPrompt = `You are an Algorithm Execution Trace Generator.
-            Your task is to trace the execution of the provided code and generate a JSON representation of the state at each significant step.
+            Your task is to trace code execution and generate JSON for VISUAL STEP-BY-STEP animation.
             
-            Rules:
-            1. Analyze the code logic (sorting, searching, hash map operations, etc.).
-            2. Generate step-by-step visualization data showing the algorithm's execution.
-            3. Include ALL relevant state changes: array values, indices being compared, hash map state, variables, and results.
-            4. Return ONLY valid JSON in the following format:
+            DETECT the algorithm pattern and use APPROPRIATE state fields:
+            
+            === VISUALIZATION TYPES ===
+            
+            1. NUMBER COMPARISON (Palindrome, comparisons):
+               Use: "original", "reversed", "comparison"
+               Example state:
+               {
+                 "original": 121,
+                 "reversed": 121,
+                 "comparison": { "left": 121, "right": 121, "operator": "==", "result": true },
+                 "variables": { "x": 121, "rev": 121 },
+                 "result": true
+               }
+            
+            2. DIGIT-BY-DIGIT (Number reversal, string operations):
+               Use: "digits", "pointers", "highlighted"
+               Example state:
+               {
+                 "digits": [1, 2, 1],
+                 "pointers": { "left": 0, "right": 2 },
+                 "highlighted": [0, 2],
+                 "variables": { "step": "comparing" }
+               }
+            
+            3. ARRAY with Hash Map (Two Sum):
+               Use: "array", "hashMap", "comparing", "found"
+               Example state:
+               {
+                 "array": [2, 7, 11, 15],
+                 "target": 9,
+                 "comparing": [0, 1],
+                 "hashMap": { "2": 0 },
+                 "found": [0, 1],
+                 "result": [0, 1]
+               }
+            
+            4. TWO POINTERS (Reverse, Container Water, 3Sum):
+               Use: "array", "pointers", "highlighted"
+               Example state:
+               {
+                 "array": ["h","e","l","l","o"],
+                 "pointers": { "left": 0, "right": 4 },
+                 "highlighted": [0, 4]
+               }
+            
+            5. STACK (Valid Parentheses):
+               Use: "stack", "highlighted", without "array"
+               Example state:
+               {
+                 "stack": ["(", "["],
+                 "variables": { "char": "]", "action": "pop and match" }
+               }
+            
+            6. BINARY SEARCH:
+               Use: "array", "pointers" with left/mid/right
+               Example state:
+               {
+                 "array": [-1,0,3,5,9,12],
+                 "target": 9,
+                 "pointers": { "left": 0, "mid": 2, "right": 5 }
+               }
+            
+            7. DP / Kadane's (Max Subarray):
+               Use: "array", "window", "variables"
+               Example state:
+               {
+                 "array": [-2,1,-3,4,-1,2,1,-5,4],
+                 "window": { "start": 3, "end": 6 },
+                 "highlighted": [3, 4, 5, 6],
+                 "variables": { "currentSum": 6, "maxSum": 6 }
+               }
+            
+            === JSON FORMAT ===
             {
                 "type": "algorithm",
-                "algorithm": "two-sum",
+                "algorithm": "<pattern-name>",
                 "steps": [
                     {
                         "index": 0,
-                        "type": "initialize",
-                        "description": "Starting with nums=[2,7,11,15], target=9",
-                        "state": {
-                             "array": [2, 7, 11, 15],
-                             "target": 9,
-                             "comparing": [],
-                             "highlighted": [],
-                             "found": [],
-                             "sorted": [],
-                             "hashMap": {},
-                             "variables": { "i": 0 },
-                             "result": null
-                        }
-                    },
-                    {
-                        "index": 1,
-                        "type": "iterate",
-                        "description": "Checking nums[0]=2, need 7. Adding 2->0 to hash map.",
-                        "state": {
-                             "array": [2, 7, 11, 15],
-                             "target": 9,
-                             "comparing": [0],
-                             "highlighted": [0],
-                             "found": [],
-                             "sorted": [],
-                             "hashMap": { "2": 0 },
-                             "variables": { "i": 0, "num": 2, "diff": 7 },
-                             "result": null
-                        }
-                    },
-                    {
-                        "index": 2,
-                        "type": "found",
-                        "description": "Found! nums[1]=7, diff=2 exists in hashMap at index 0",
-                        "state": {
-                             "array": [2, 7, 11, 15],
-                             "target": 9,
-                             "comparing": [0, 1],
-                             "highlighted": [],
-                             "found": [0, 1],
-                             "sorted": [],
-                             "hashMap": { "2": 0 },
-                             "variables": { "i": 1, "num": 7, "diff": 2 },
-                             "result": [0, 1]
-                        }
+                        "type": "initialize|iterate|compare|swap|found|complete",
+                        "description": "Clear description for user",
+                        "state": { ... appropriate fields ... }
                     }
                 ]
             }
             
-            Important:
-            - hashMap: Object showing key-value pairs as the algorithm builds the map
-            - comparing: Array of indices currently being looked at
-            - highlighted: Array of indices to highlight (yellow)
-            - found: Array of indices that are part of the solution (green)
-            - target: The target value for algorithms like Two Sum
-            - result: The final result when found, null otherwise
-            
-            Return ONLY valid JSON.
+            RULES:
+            - ALWAYS include "variables" showing key variable values
+            - Use "result" field when algorithm finds answer
+            - Generate 5-15 meaningful steps
+            - Descriptions should explain WHAT is happening
+            - Return ONLY valid JSON, no markdown
             `;
         const content = await callLLM(systemPrompt, `Trace this ${language} code and generate visualization steps:\n\n${code}`);
         try {
@@ -238,6 +262,204 @@ serve(async (req) => {
       return LANGUAGE_MAP[lc] || null;
     }
 
+    // Auto-wrap code to add stdin/stdout handling if missing
+    function wrapCodeForExecution(code: string, language: string, testInput: string): string {
+      const lang = (language || "").toLowerCase().trim();
+
+      // Detect if code already has stdin reading
+      const hasPythonInput = /\binput\s*\(/.test(code) || /sys\.stdin/.test(code);
+      const hasJsInput = /readline|process\.stdin|require\s*\(\s*['"]readline['"]/.test(code);
+      const hasCppInput = /\bcin\b|getline|scanf/.test(code);
+
+      // Detect if code has print/output
+      const hasPythonPrint = /\bprint\s*\(/.test(code);
+      const hasJsConsole = /console\.log/.test(code);
+      const hasCppOutput = /\bcout\b|printf/.test(code);
+
+      // Python wrapping
+      if (lang === "python" || lang === "python3" || lang === "py") {
+        if (hasPythonInput && hasPythonPrint) {
+          return code; // Already has I/O
+        }
+
+        // Try to detect the main function name
+        const funcMatch = code.match(/def\s+(\w+)\s*\([^)]*\)\s*:/);
+        if (funcMatch) {
+          const funcName = funcMatch[1];
+          // Check if function is already called
+          const isCalled = new RegExp(`\\b${funcName}\\s*\\(`).test(code.split(funcMatch[0])[1] || "");
+
+          if (!isCalled) {
+            // Parse the test input to determine argument structure
+            return `import json
+import sys
+import re
+
+${code}
+
+# Auto-generated input handling
+try:
+    line = input().strip()
+    args = []
+    
+    # Handle format like "[2,7,11,15], 9" - array followed by other args
+    if line.startswith('['):
+        # Find the closing bracket
+        bracket_count = 0
+        end_idx = 0
+        for i, c in enumerate(line):
+            if c == '[':
+                bracket_count += 1
+            elif c == ']':
+                bracket_count -= 1
+                if bracket_count == 0:
+                    end_idx = i
+                    break
+        
+        # Parse the array
+        arr_str = line[:end_idx + 1]
+        args.append(json.loads(arr_str))
+        
+        # Parse remaining arguments after the array
+        remaining = line[end_idx + 1:].strip()
+        if remaining.startswith(','):
+            remaining = remaining[1:].strip()
+        if remaining:
+            # Split by comma and parse each value
+            for part in remaining.split(','):
+                part = part.strip()
+                if part:
+                    try:
+                        args.append(json.loads(part))
+                    except:
+                        args.append(part)
+    elif line.startswith('{'):
+        args.append(json.loads(line))
+    else:
+        # Simple comma-separated values
+        for part in line.split(','):
+            part = part.strip()
+            if part:
+                try:
+                    args.append(json.loads(part))
+                except:
+                    args.append(part)
+    
+    # Call function with parsed args
+    if len(args) == 0:
+        result = ${funcName}()
+    elif len(args) == 1:
+        result = ${funcName}(args[0])
+    else:
+        result = ${funcName}(*args)
+    
+    # Print result
+    if isinstance(result, (list, dict)):
+        print(json.dumps(result, separators=(',', ':')))
+    elif isinstance(result, bool):
+        print(str(result).lower())
+    elif result is None:
+        print('null')
+    else:
+        print(result)
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
+    import traceback
+    traceback.print_exc(file=sys.stderr)
+`;
+          }
+        }
+        return code;
+      }
+
+      // JavaScript wrapping
+      if (lang === "javascript" || lang === "js" || lang === "node") {
+        if (hasJsInput && hasJsConsole) {
+          return code; // Already has I/O
+        }
+
+        // Try to detect the main function name
+        const funcMatch = code.match(/function\s+(\w+)\s*\(|const\s+(\w+)\s*=\s*(?:\([^)]*\)|[^=])\s*=>/);
+        if (funcMatch) {
+          const funcName = funcMatch[1] || funcMatch[2];
+          // Check if function is already called with readline
+          if (!hasJsInput) {
+            return `${code}
+
+// Auto-generated input handling
+const readline = require('readline');
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+rl.on('line', (line) => {
+    try {
+        let args;
+        line = line.trim();
+        // Try JSON parse
+        if (line.startsWith('[') || line.startsWith('{')) {
+            args = JSON.parse(line);
+        } else {
+            // Comma-separated
+            args = line.split(',').map(p => {
+                p = p.trim();
+                try { return JSON.parse(p); } catch { return p; }
+            });
+        }
+        const result = Array.isArray(args) && args.length > 1 ? ${funcName}(...args) : ${funcName}(Array.isArray(args) ? args[0] : args);
+        console.log(typeof result === 'object' ? JSON.stringify(result) : result);
+    } catch (e) {
+        console.error('Error:', e.message);
+    }
+    rl.close();
+});`;
+          }
+        }
+        return code;
+      }
+
+      // C++ wrapping
+      if (lang === "c++" || lang === "cpp") {
+        if (hasCppInput && hasCppOutput) {
+          return code; // Already has I/O
+        }
+
+        // For C++, we need a more careful approach - just return as-is if no main or if main exists
+        const hasMain = /int\s+main\s*\(/.test(code);
+        if (hasMain) {
+          return code;
+        }
+
+        // Check for class Solution pattern (LeetCode style)
+        const classMatch = code.match(/class\s+Solution\s*\{/);
+        if (classMatch) {
+          // Find the method
+          const methodMatch = code.match(/(?:vector<\w+>|int|bool|string|void)\s+(\w+)\s*\([^)]*\)/);
+          if (methodMatch) {
+            const methodName = methodMatch[1];
+            return `#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+using namespace std;
+
+${code}
+
+int main() {
+    Solution sol;
+    string line;
+    getline(cin, line);
+    // Basic parsing - user should provide proper input format
+    cout << "Solution method: ${methodName}" << endl;
+    return 0;
+}`;
+          }
+        }
+        return code;
+      }
+
+      return code;
+    }
+
+
     async function runSubmission(source_code: string, language_id: number | null, stdin?: string) {
       if (!language_id) {
         return { error: "language_not_supported" };
@@ -284,7 +506,9 @@ serve(async (req) => {
 
                 const input = t.input ?? "";
                 const expected = t.expected ?? null;
-                const result = await runSubmission(code, langId, input);
+                // Auto-wrap code if it doesn't have stdin/stdout handling
+                const wrappedCode = wrapCodeForExecution(code, language || "", input);
+                const result = await runSubmission(wrappedCode, langId, input);
 
                 // Check for API-level errors (not code execution errors)
                 if (result.error && typeof result.error === 'string' && result.error.startsWith('judge0_error')) {

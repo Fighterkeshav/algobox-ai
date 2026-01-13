@@ -8,44 +8,50 @@ interface D3CodeVisualizationProps {
         type: string;
         description: string;
         state: {
-            array?: number[];
+            array?: (number | string)[];
             nums?: number[];
+            digits?: (number | string)[];
+            original?: number | string;
+            reversed?: number | string;
             comparing?: number[];
             highlighted?: number[];
             sorted?: number[];
             found?: number[];
             hashMap?: Record<string | number, number>;
+            stack?: (string | number)[];
+            pointers?: { left?: number | null; right?: number | null; mid?: number | null };
+            window?: { start?: number | null; end?: number | null };
             variables?: Record<string, any>;
             target?: number;
-            result?: number[] | null;
+            result?: (number | string)[] | number | string | boolean | null;
+            comparison?: { left: any; right: any; operator: string; result?: boolean };
         };
     };
 }
 
-// Color palette inspired by algorithm-visualizer
 const COLORS = {
-    default: "#5c6bc0",       // Indigo
-    comparing: "#ffa726",     // Orange
-    found: "#66bb6a",         // Green
-    sorted: "#66bb6a",        // Green
-    highlighted: "#42a5f5",   // Blue
-    selected: "#ab47bc",      // Purple
+    default: "#5c6bc0",
+    comparing: "#ffa726",
+    found: "#66bb6a",
+    sorted: "#66bb6a",
+    highlighted: "#42a5f5",
+    selected: "#ab47bc",
+    error: "#ef4444",
     text: "#e2e8f0",
     textMuted: "#94a3b8",
     background: "#0f172a",
     cardBg: "#1e293b",
     border: "#334155",
+    pointer: "#f472b6",
 };
 
 export function D3CodeVisualization({ step }: D3CodeVisualizationProps) {
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [dimensions, setDimensions] = useState({ width: 600, height: 350 });
+    const [dimensions, setDimensions] = useState({ width: 600, height: 400 });
 
-    // Handle resize
     useEffect(() => {
         if (!containerRef.current) return;
-
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 setDimensions({
@@ -54,7 +60,6 @@ export function D3CodeVisualization({ step }: D3CodeVisualizationProps) {
                 });
             }
         });
-
         resizeObserver.observe(containerRef.current);
         return () => resizeObserver.disconnect();
     }, []);
@@ -63,320 +68,531 @@ export function D3CodeVisualization({ step }: D3CodeVisualizationProps) {
         if (!svgRef.current || !step?.state) return;
 
         const state = step.state;
-        const array = state.array || state.nums || [];
-        const {
-            comparing = [],
-            highlighted = [],
-            sorted = [],
-            found = [],
-            hashMap = {},
-            variables = {},
-            target,
-            result
-        } = state;
-
-        if (!array.length) return;
-
         const svg = d3.select(svgRef.current);
-        const width = dimensions.width;
-        const height = dimensions.height;
+        const { width, height } = dimensions;
 
         svg.selectAll("*").remove();
 
-        // Layout
-        const marginTop = 70;
-        const marginBottom = Object.keys(hashMap).length > 0 ? 120 : 50;
-        const marginLeft = 30;
-        const marginRight = 30;
-        const chartHeight = height - marginTop - marginBottom;
-        const chartWidth = width - marginLeft - marginRight;
-
-        // Main group
-        const g = svg.append("g")
-            .attr("transform", `translate(${marginLeft}, ${marginTop})`);
-
-        // Gradient definitions for bars
+        // Create gradient definitions
         const defs = svg.append("defs");
-
-        ["default", "comparing", "found", "highlighted"].forEach((type) => {
+        ["default", "comparing", "found", "highlighted", "pointer"].forEach((type) => {
             const gradient = defs.append("linearGradient")
                 .attr("id", `gradient-${type}`)
                 .attr("x1", "0%").attr("y1", "0%")
                 .attr("x2", "0%").attr("y2", "100%");
-
             const color = COLORS[type as keyof typeof COLORS] || COLORS.default;
             gradient.append("stop").attr("offset", "0%").attr("stop-color", d3.color(color)?.brighter(0.3)?.toString() || color);
             gradient.append("stop").attr("offset", "100%").attr("stop-color", color);
         });
 
-        // Header
-        const header = svg.append("g")
-            .attr("transform", `translate(${width / 2}, 25)`);
+        const marginTop = 60;
+        const marginBottom = 80;
+        const marginLeft = 30;
+        const marginRight = 30;
 
-        if (target !== undefined) {
-            header.append("text")
+        // Main content group
+        const g = svg.append("g").attr("transform", `translate(${marginLeft}, ${marginTop})`);
+        const contentWidth = width - marginLeft - marginRight;
+        const contentHeight = height - marginTop - marginBottom;
+
+        // === DETECT VISUALIZATION TYPE ===
+        const hasArray = (state.array && state.array.length > 0) || (state.nums && state.nums.length > 0);
+        const hasDigits = state.digits && state.digits.length > 0;
+        const hasComparison = state.comparison || (state.original !== undefined && state.reversed !== undefined);
+        const hasStack = state.stack && state.stack.length > 0;
+        const hasPointers = state.pointers && (state.pointers.left !== null || state.pointers.right !== null);
+
+        // === RENDER BASED ON TYPE ===
+
+        // 1. NUMBER COMPARISON VIEW
+        if (hasComparison || (state.original !== undefined)) {
+            renderComparisonView(g, state, contentWidth, contentHeight);
+        }
+        // 2. DIGITS VIEW (for palindrome, reverse)
+        else if (hasDigits) {
+            renderDigitsView(g, state, contentWidth, contentHeight);
+        }
+        // 3. STACK VIEW
+        else if (hasStack && !hasArray) {
+            renderStackView(g, state, contentWidth, contentHeight);
+        }
+        // 4. ARRAY VIEW (with pointers support)
+        else if (hasArray) {
+            renderArrayView(g, state, contentWidth, contentHeight);
+        }
+        // 5. VARIABLES ONLY VIEW
+        else {
+            renderVariablesOnlyView(g, state, contentWidth, contentHeight);
+        }
+
+        // === VARIABLES PANEL (always shown if variables exist) ===
+        if (state.variables && Object.keys(state.variables).length > 0) {
+            renderVariablesPanel(svg, state.variables, width, height);
+        }
+
+        // === RESULT DISPLAY ===
+        if (state.result !== undefined && state.result !== null) {
+            renderResult(svg, state.result, width, height);
+        }
+
+        // Helper functions
+        function renderComparisonView(g: any, state: any, w: number, h: number) {
+            const centerY = h / 2 - 20;
+            const boxWidth = Math.min(150, w / 3);
+            const boxHeight = 60;
+            const gap = 60;
+
+            // Title
+            g.append("text")
+                .attr("x", w / 2)
+                .attr("y", 0)
                 .attr("text-anchor", "middle")
                 .style("fill", COLORS.text)
-                .style("font-size", "16px")
-                .style("font-weight", "700")
-                .text(`Target: ${target}`);
-        }
+                .style("font-size", "14px")
+                .style("font-weight", "600")
+                .text("Number Comparison");
 
-        // Variables display
-        const varsArr = Object.entries(variables);
-        if (varsArr.length > 0) {
-            const varsText = varsArr.map(([k, v]) => `${k}=${JSON.stringify(v)}`).join("   ");
-            svg.append("text")
-                .attr("x", width / 2)
-                .attr("y", 50)
+            // Left box (original)
+            const leftX = w / 2 - boxWidth - gap / 2;
+            g.append("rect")
+                .attr("x", leftX)
+                .attr("y", centerY)
+                .attr("width", boxWidth)
+                .attr("height", boxHeight)
+                .attr("rx", 8)
+                .style("fill", COLORS.cardBg)
+                .style("stroke", COLORS.highlighted)
+                .style("stroke-width", 2);
+
+            g.append("text")
+                .attr("x", leftX + boxWidth / 2)
+                .attr("y", centerY - 10)
                 .attr("text-anchor", "middle")
                 .style("fill", COLORS.textMuted)
-                .style("font-size", "12px")
-                .style("font-family", "'JetBrains Mono', monospace")
-                .text(varsText);
-        }
+                .style("font-size", "11px")
+                .text("Original");
 
-        // Array visualization
-        const maxValue = Math.max(...array.map(v => Math.abs(v)), 1);
-        const barPadding = 0.2;
-
-        const xScale = d3.scaleBand<number>()
-            .domain(array.map((_, i) => i))
-            .range([0, chartWidth])
-            .padding(barPadding);
-
-        const yScale = d3.scaleLinear()
-            .domain([0, maxValue * 1.1])
-            .range([chartHeight, 0]);
-
-        // Get bar type
-        const getBarType = (index: number): string => {
-            if (found.includes(index)) return "found";
-            if (sorted.includes(index)) return "found";
-            if (comparing.includes(index)) return "comparing";
-            if (highlighted.includes(index)) return "highlighted";
-            return "default";
-        };
-
-        // Draw bars with animation
-        const bars = g.selectAll(".bar-group")
-            .data(array)
-            .enter()
-            .append("g")
-            .attr("class", "bar-group")
-            .attr("transform", (_, i) => `translate(${xScale(i)}, 0)`);
-
-        // Bar rectangles
-        bars.append("rect")
-            .attr("class", "bar")
-            .attr("y", chartHeight)
-            .attr("height", 0)
-            .attr("width", xScale.bandwidth())
-            .attr("rx", 6)
-            .attr("ry", 6)
-            .style("fill", (_, i) => `url(#gradient-${getBarType(i)})`)
-            .style("filter", (_, i) => {
-                const type = getBarType(i);
-                if (type === "comparing" || type === "found") {
-                    return `drop-shadow(0 0 10px ${COLORS[type as keyof typeof COLORS]})`;
-                }
-                return "none";
-            })
-            .transition()
-            .duration(400)
-            .ease(d3.easeCubicOut)
-            .attr("y", d => yScale(Math.abs(d)))
-            .attr("height", d => chartHeight - yScale(Math.abs(d)));
-
-        // Value labels inside bars
-        bars.append("text")
-            .attr("class", "value-label")
-            .attr("x", xScale.bandwidth() / 2)
-            .attr("y", (d) => yScale(Math.abs(d)) - 8)
-            .attr("text-anchor", "middle")
-            .style("fill", COLORS.text)
-            .style("font-size", "14px")
-            .style("font-weight", "700")
-            .style("font-family", "'JetBrains Mono', monospace")
-            .style("opacity", 0)
-            .text(d => d)
-            .transition()
-            .duration(400)
-            .delay(200)
-            .style("opacity", 1);
-
-        // Index labels
-        bars.append("text")
-            .attr("class", "index-label")
-            .attr("x", xScale.bandwidth() / 2)
-            .attr("y", chartHeight + 18)
-            .attr("text-anchor", "middle")
-            .style("fill", COLORS.textMuted)
-            .style("font-size", "11px")
-            .style("font-family", "'JetBrains Mono', monospace")
-            .text((_, i) => i);
-
-        // Pointer arrows for comparing indices
-        comparing.forEach((idx) => {
-            if (idx >= 0 && idx < array.length) {
-                const x = xScale(idx)! + xScale.bandwidth() / 2;
-
-                g.append("path")
-                    .attr("d", d3.symbol().type(d3.symbolTriangle).size(80))
-                    .attr("transform", `translate(${x}, -12) rotate(180)`)
-                    .style("fill", COLORS.comparing)
-                    .style("opacity", 0)
-                    .transition()
-                    .duration(300)
-                    .style("opacity", 1);
-            }
-        });
-
-        // Hash Map visualization
-        const hashEntries = Object.entries(hashMap);
-
-        if (hashEntries.length > 0) {
-            const hashY = chartHeight + 45;
-
-            // Hash Map label
             g.append("text")
-                .attr("x", 0)
-                .attr("y", hashY)
+                .attr("x", leftX + boxWidth / 2)
+                .attr("y", centerY + boxHeight / 2 + 8)
+                .attr("text-anchor", "middle")
+                .style("fill", COLORS.text)
+                .style("font-size", "24px")
+                .style("font-weight", "700")
+                .style("font-family", "'JetBrains Mono', monospace")
+                .text(state.original ?? state.comparison?.left ?? "?");
+
+            // Operator
+            const operator = state.comparison?.operator || "==";
+            g.append("text")
+                .attr("x", w / 2)
+                .attr("y", centerY + boxHeight / 2 + 8)
+                .attr("text-anchor", "middle")
+                .style("fill", COLORS.comparing)
+                .style("font-size", "28px")
+                .style("font-weight", "700")
+                .text(operator);
+
+            // Right box (reversed/comparison value)
+            const rightX = w / 2 + gap / 2;
+            g.append("rect")
+                .attr("x", rightX)
+                .attr("y", centerY)
+                .attr("width", boxWidth)
+                .attr("height", boxHeight)
+                .attr("rx", 8)
+                .style("fill", COLORS.cardBg)
+                .style("stroke", COLORS.found)
+                .style("stroke-width", 2);
+
+            g.append("text")
+                .attr("x", rightX + boxWidth / 2)
+                .attr("y", centerY - 10)
+                .attr("text-anchor", "middle")
                 .style("fill", COLORS.textMuted)
                 .style("font-size", "11px")
+                .text("Reversed");
+
+            g.append("text")
+                .attr("x", rightX + boxWidth / 2)
+                .attr("y", centerY + boxHeight / 2 + 8)
+                .attr("text-anchor", "middle")
+                .style("fill", COLORS.text)
+                .style("font-size", "24px")
+                .style("font-weight", "700")
+                .style("font-family", "'JetBrains Mono', monospace")
+                .text(state.reversed ?? state.comparison?.right ?? "?");
+
+            // Result indicator
+            if (state.comparison?.result !== undefined || (state.original !== undefined && state.reversed !== undefined)) {
+                const isEqual = state.comparison?.result ?? (state.original === state.reversed);
+                const resultY = centerY + boxHeight + 30;
+
+                g.append("text")
+                    .attr("x", w / 2)
+                    .attr("y", resultY)
+                    .attr("text-anchor", "middle")
+                    .style("fill", isEqual ? COLORS.found : COLORS.error)
+                    .style("font-size", "16px")
+                    .style("font-weight", "600")
+                    .text(isEqual ? "✓ Equal - Palindrome!" : "✗ Not Equal");
+            }
+        }
+
+        function renderDigitsView(g: any, state: any, w: number, h: number) {
+            const digits = state.digits || [];
+            const boxSize = Math.min(50, (w - 40) / Math.max(digits.length, 1));
+            const gap = 8;
+            const totalWidth = digits.length * (boxSize + gap) - gap;
+            const startX = (w - totalWidth) / 2;
+            const centerY = h / 2 - 40;
+
+            // Title
+            g.append("text")
+                .attr("x", w / 2)
+                .attr("y", 0)
+                .attr("text-anchor", "middle")
+                .style("fill", COLORS.text)
+                .style("font-size", "14px")
                 .style("font-weight", "600")
-                .text("Hash Map:");
+                .text("Digits");
 
-            // Draw hash map as key-value boxes
-            const hashG = g.append("g")
-                .attr("transform", `translate(70, ${hashY - 12})`);
+            digits.forEach((digit: any, i: number) => {
+                const x = startX + i * (boxSize + gap);
+                const isHighlighted = state.highlighted?.includes(i);
+                const isComparing = state.comparing?.includes(i);
 
-            const boxWidth = 50;
-            const boxHeight = 26;
-            const spacing = 8;
-
-            hashEntries.forEach(([key, value], i) => {
-                const x = i * (boxWidth + spacing);
-
-                // Container
-                const entry = hashG.append("g")
-                    .attr("transform", `translate(${x}, 0)`)
-                    .style("opacity", 0);
-
-                entry.transition()
+                g.append("rect")
+                    .attr("x", x)
+                    .attr("y", centerY)
+                    .attr("width", boxSize)
+                    .attr("height", boxSize)
+                    .attr("rx", 6)
+                    .style("fill", isHighlighted ? COLORS.highlighted : isComparing ? COLORS.comparing : COLORS.cardBg)
+                    .style("stroke", COLORS.border)
+                    .style("stroke-width", 1)
+                    .style("opacity", 0)
+                    .transition()
                     .duration(300)
                     .delay(i * 50)
                     .style("opacity", 1);
 
-                // Key box
-                entry.append("rect")
-                    .attr("width", boxWidth / 2 - 2)
-                    .attr("height", boxHeight)
-                    .attr("rx", 4)
-                    .style("fill", COLORS.cardBg)
-                    .style("stroke", COLORS.border)
-                    .style("stroke-width", 1);
-
-                entry.append("text")
-                    .attr("x", boxWidth / 4 - 1)
-                    .attr("y", boxHeight / 2 + 4)
+                g.append("text")
+                    .attr("x", x + boxSize / 2)
+                    .attr("y", centerY + boxSize / 2 + 6)
                     .attr("text-anchor", "middle")
                     .style("fill", COLORS.text)
-                    .style("font-size", "11px")
+                    .style("font-size", "18px")
+                    .style("font-weight", "700")
                     .style("font-family", "'JetBrains Mono', monospace")
-                    .text(key);
+                    .text(digit);
 
-                // Arrow
-                entry.append("text")
-                    .attr("x", boxWidth / 2 + 1)
-                    .attr("y", boxHeight / 2 + 4)
+                // Index label
+                g.append("text")
+                    .attr("x", x + boxSize / 2)
+                    .attr("y", centerY + boxSize + 16)
                     .attr("text-anchor", "middle")
                     .style("fill", COLORS.textMuted)
                     .style("font-size", "10px")
-                    .text("→");
+                    .text(i);
+            });
 
-                // Value box
-                entry.append("rect")
-                    .attr("x", boxWidth / 2 + 6)
-                    .attr("width", boxWidth / 2 - 2)
+            // Pointers for two-pointer algorithms
+            if (state.pointers) {
+                const { left, right } = state.pointers;
+                if (left !== null && left !== undefined && left < digits.length) {
+                    const x = startX + left * (boxSize + gap) + boxSize / 2;
+                    g.append("path")
+                        .attr("d", d3.symbol().type(d3.symbolTriangle).size(100))
+                        .attr("transform", `translate(${x}, ${centerY - 15}) rotate(180)`)
+                        .style("fill", COLORS.pointer);
+                    g.append("text")
+                        .attr("x", x)
+                        .attr("y", centerY - 25)
+                        .attr("text-anchor", "middle")
+                        .style("fill", COLORS.pointer)
+                        .style("font-size", "10px")
+                        .text("L");
+                }
+                if (right !== null && right !== undefined && right < digits.length) {
+                    const x = startX + right * (boxSize + gap) + boxSize / 2;
+                    g.append("path")
+                        .attr("d", d3.symbol().type(d3.symbolTriangle).size(100))
+                        .attr("transform", `translate(${x}, ${centerY - 15}) rotate(180)`)
+                        .style("fill", COLORS.found);
+                    g.append("text")
+                        .attr("x", x)
+                        .attr("y", centerY - 25)
+                        .attr("text-anchor", "middle")
+                        .style("fill", COLORS.found)
+                        .style("font-size", "10px")
+                        .text("R");
+                }
+            }
+        }
+
+        function renderStackView(g: any, state: any, w: number, h: number) {
+            const stack = state.stack || [];
+            const boxHeight = 35;
+            const boxWidth = Math.min(100, w / 3);
+            const gap = 4;
+            const startX = (w - boxWidth) / 2;
+            const maxVisible = Math.floor((h - 40) / (boxHeight + gap));
+            const visibleStack = stack.slice(-maxVisible);
+
+            // Title
+            g.append("text")
+                .attr("x", w / 2)
+                .attr("y", 0)
+                .attr("text-anchor", "middle")
+                .style("fill", COLORS.text)
+                .style("font-size", "14px")
+                .style("font-weight", "600")
+                .text("Stack");
+
+            // Stack visualization (bottom to top)
+            visibleStack.forEach((item: any, i: number) => {
+                const y = h - 60 - i * (boxHeight + gap);
+                const isTop = i === visibleStack.length - 1;
+
+                g.append("rect")
+                    .attr("x", startX)
+                    .attr("y", y)
+                    .attr("width", boxWidth)
                     .attr("height", boxHeight)
                     .attr("rx", 4)
-                    .style("fill", "#1e3a5f")
-                    .style("stroke", "#3b82f6")
-                    .style("stroke-width", 1);
+                    .style("fill", isTop ? COLORS.highlighted : COLORS.cardBg)
+                    .style("stroke", isTop ? COLORS.highlighted : COLORS.border)
+                    .style("stroke-width", isTop ? 2 : 1);
 
-                entry.append("text")
-                    .attr("x", boxWidth / 2 + 6 + boxWidth / 4 - 1)
-                    .attr("y", boxHeight / 2 + 4)
+                g.append("text")
+                    .attr("x", startX + boxWidth / 2)
+                    .attr("y", y + boxHeight / 2 + 5)
                     .attr("text-anchor", "middle")
-                    .style("fill", "#60a5fa")
-                    .style("font-size", "11px")
+                    .style("fill", COLORS.text)
+                    .style("font-size", "16px")
+                    .style("font-weight", "600")
                     .style("font-family", "'JetBrains Mono', monospace")
-                    .text(String(value));
+                    .text(String(item));
             });
+
+            // Top indicator
+            if (visibleStack.length > 0) {
+                const topY = h - 60 - (visibleStack.length - 1) * (boxHeight + gap);
+                g.append("text")
+                    .attr("x", startX - 10)
+                    .attr("y", topY + boxHeight / 2 + 5)
+                    .attr("text-anchor", "end")
+                    .style("fill", COLORS.pointer)
+                    .style("font-size", "12px")
+                    .text("TOP →");
+            }
         }
 
-        // Result display
-        if (result && result.length > 0) {
-            svg.append("text")
-                .attr("x", width / 2)
-                .attr("y", height - 15)
+        function renderArrayView(g: any, state: any, w: number, h: number) {
+            const array = state.array || state.nums || [];
+            if (!array.length) return;
+
+            const { comparing = [], highlighted = [], sorted = [], found = [], pointers = {}, hashMap = {} } = state;
+
+            // Convert to numbers for visualization
+            const numericArray = array.map((v: any) => typeof v === 'number' ? v : (typeof v === 'string' ? v.charCodeAt(0) : 0));
+            const maxValue = Math.max(...numericArray.map((v: number) => Math.abs(v)), 1);
+
+            const barPadding = 0.15;
+            const chartHeight = h - (Object.keys(hashMap).length > 0 ? 80 : 20);
+
+            const xScale = d3.scaleBand<number>()
+                .domain(array.map((_: any, i: number) => i))
+                .range([0, w])
+                .padding(barPadding);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, maxValue * 1.15])
+                .range([chartHeight, 0]);
+
+            const getBarType = (index: number): string => {
+                if (found.includes(index)) return "found";
+                if (sorted.includes(index)) return "found";
+                if (comparing.includes(index)) return "comparing";
+                if (highlighted.includes(index)) return "highlighted";
+                if (pointers.left === index || pointers.right === index) return "pointer";
+                return "default";
+            };
+
+            // Draw bars
+            array.forEach((val: any, i: number) => {
+                const barType = getBarType(i);
+                const numVal = numericArray[i];
+                const barHeight = chartHeight - yScale(Math.abs(numVal));
+
+                g.append("rect")
+                    .attr("x", xScale(i))
+                    .attr("y", yScale(Math.abs(numVal)))
+                    .attr("width", xScale.bandwidth())
+                    .attr("height", barHeight)
+                    .attr("rx", 4)
+                    .style("fill", `url(#gradient-${barType})`)
+                    .style("filter", barType !== "default" ? `drop-shadow(0 0 8px ${COLORS[barType as keyof typeof COLORS]})` : "none");
+
+                // Value label
+                g.append("text")
+                    .attr("x", (xScale(i) || 0) + xScale.bandwidth() / 2)
+                    .attr("y", yScale(Math.abs(numVal)) - 6)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.text)
+                    .style("font-size", "12px")
+                    .style("font-weight", "600")
+                    .style("font-family", "'JetBrains Mono', monospace")
+                    .text(val);
+
+                // Index label
+                g.append("text")
+                    .attr("x", (xScale(i) || 0) + xScale.bandwidth() / 2)
+                    .attr("y", chartHeight + 14)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.textMuted)
+                    .style("font-size", "10px")
+                    .text(i);
+            });
+
+            // Pointer arrows
+            if (pointers.left !== null && pointers.left !== undefined) {
+                const x = (xScale(pointers.left) || 0) + xScale.bandwidth() / 2;
+                g.append("path")
+                    .attr("d", d3.symbol().type(d3.symbolTriangle).size(80))
+                    .attr("transform", `translate(${x}, -10) rotate(180)`)
+                    .style("fill", COLORS.pointer);
+                g.append("text")
+                    .attr("x", x).attr("y", -18)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.pointer)
+                    .style("font-size", "10px")
+                    .text("L");
+            }
+            if (pointers.right !== null && pointers.right !== undefined) {
+                const x = (xScale(pointers.right) || 0) + xScale.bandwidth() / 2;
+                g.append("path")
+                    .attr("d", d3.symbol().type(d3.symbolTriangle).size(80))
+                    .attr("transform", `translate(${x}, -10) rotate(180)`)
+                    .style("fill", COLORS.found);
+                g.append("text")
+                    .attr("x", x).attr("y", -18)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.found)
+                    .style("font-size", "10px")
+                    .text("R");
+            }
+            if (pointers.mid !== null && pointers.mid !== undefined) {
+                const x = (xScale(pointers.mid) || 0) + xScale.bandwidth() / 2;
+                g.append("path")
+                    .attr("d", d3.symbol().type(d3.symbolTriangle).size(80))
+                    .attr("transform", `translate(${x}, -10) rotate(180)`)
+                    .style("fill", COLORS.comparing);
+                g.append("text")
+                    .attr("x", x).attr("y", -18)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.comparing)
+                    .style("font-size", "10px")
+                    .text("M");
+            }
+
+            // Hash Map
+            if (Object.keys(hashMap).length > 0) {
+                const hashY = chartHeight + 30;
+                g.append("text")
+                    .attr("x", 0).attr("y", hashY)
+                    .style("fill", COLORS.textMuted)
+                    .style("font-size", "10px")
+                    .text("HashMap:");
+
+                const entries = Object.entries(hashMap);
+                const entryWidth = 45;
+                entries.slice(0, 8).forEach(([key, value], i) => {
+                    const x = 60 + i * (entryWidth + 6);
+                    g.append("rect")
+                        .attr("x", x).attr("y", hashY - 12)
+                        .attr("width", entryWidth).attr("height", 22)
+                        .attr("rx", 4)
+                        .style("fill", COLORS.cardBg)
+                        .style("stroke", COLORS.border);
+                    g.append("text")
+                        .attr("x", x + entryWidth / 2).attr("y", hashY + 2)
+                        .attr("text-anchor", "middle")
+                        .style("fill", COLORS.text)
+                        .style("font-size", "9px")
+                        .style("font-family", "'JetBrains Mono', monospace")
+                        .text(`${key}→${value}`);
+                });
+            }
+        }
+
+        function renderVariablesOnlyView(g: any, state: any, w: number, h: number) {
+            g.append("text")
+                .attr("x", w / 2)
+                .attr("y", h / 2)
                 .attr("text-anchor", "middle")
-                .style("fill", COLORS.found)
-                .style("font-size", "15px")
-                .style("font-weight", "700")
-                .style("font-family", "'JetBrains Mono', monospace")
-                .text(`✓ Result: [${result.join(", ")}]`);
+                .style("fill", COLORS.textMuted)
+                .style("font-size", "14px")
+                .text("See variables panel below ↓");
         }
 
-        // Legend
-        const legendItems = [
-            { label: "Active", color: COLORS.default },
-            { label: "Comparing", color: COLORS.comparing },
-            { label: "Found", color: COLORS.found },
-        ];
+        function renderVariablesPanel(svg: any, variables: Record<string, any>, w: number, h: number) {
+            const panelY = h - 55;
+            const entries = Object.entries(variables);
 
-        const legend = svg.append("g")
-            .attr("transform", `translate(${width - 180}, 20)`);
+            // Background
+            svg.append("rect")
+                .attr("x", 10).attr("y", panelY - 5)
+                .attr("width", w - 20).attr("height", 35)
+                .attr("rx", 6)
+                .style("fill", "rgba(30, 41, 59, 0.8)")
+                .style("stroke", COLORS.border);
 
-        legendItems.forEach((item, i) => {
-            const lg = legend.append("g")
-                .attr("transform", `translate(${i * 60}, 0)`);
+            // Variables
+            const varText = entries.map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join("  │  ");
+            svg.append("text")
+                .attr("x", 20).attr("y", panelY + 15)
+                .style("fill", COLORS.text)
+                .style("font-size", "11px")
+                .style("font-family", "'JetBrains Mono', monospace")
+                .text(varText.length > 80 ? varText.substring(0, 77) + "..." : varText);
+        }
 
-            lg.append("rect")
-                .attr("width", 12)
-                .attr("height", 12)
-                .attr("rx", 3)
-                .style("fill", item.color);
+        function renderResult(svg: any, result: any, w: number, h: number) {
+            const resultStr = typeof result === 'object' ? JSON.stringify(result) : String(result);
+            const isSuccess = result === true || (typeof result === 'string' && result.toLowerCase().includes('true'));
 
-            lg.append("text")
-                .attr("x", 16)
-                .attr("y", 10)
-                .style("fill", COLORS.textMuted)
-                .style("font-size", "10px")
-                .text(item.label);
-        });
+            svg.append("text")
+                .attr("x", w / 2)
+                .attr("y", h - 10)
+                .attr("text-anchor", "middle")
+                .style("fill", typeof result === 'boolean' ? (result ? COLORS.found : COLORS.error) : COLORS.found)
+                .style("font-size", "13px")
+                .style("font-weight", "600")
+                .style("font-family", "'JetBrains Mono', monospace")
+                .text(`Result: ${resultStr}`);
+        }
 
     }, [step, dimensions]);
 
     return (
-        <div ref={containerRef} className="w-full h-full bg-[#0f172a] rounded-lg overflow-hidden">
+        <div ref={containerRef} className="w-full h-full bg-[#0f172a] rounded-lg overflow-hidden relative">
             <svg
                 ref={svgRef}
                 width={dimensions.width}
                 height={dimensions.height}
                 className="w-full h-full"
             />
-            {/* Step description overlay */}
             <AnimatePresence>
                 {step?.description && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0f172a] to-transparent p-4 pt-8"
+                        className="absolute top-2 left-0 right-0 px-4"
                     >
-                        <p className="text-center text-sm text-slate-300 font-medium">
+                        <p className="text-center text-sm text-slate-300 font-medium bg-slate-900/80 rounded-lg py-2 px-3">
                             {step.description}
                         </p>
                     </motion.div>
