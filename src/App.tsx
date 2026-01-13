@@ -6,8 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Roadmap from "./pages/Roadmap";
-import Practice from "./pages/Practice";
 import Analytics from "./pages/Analytics";
+// Practice page
+import Practice from "./pages/Practice";
 import Notes from "./pages/Notes";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";

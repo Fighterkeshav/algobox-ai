@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Lightbulb } from "lucide-react";
+import { apiUrl } from "@/lib/api";
 
 interface AIExplanationProps {
   algorithm: string;
@@ -17,7 +18,7 @@ export default function AIExplanation({ algorithm, stepIndex, state, codeLines }
   const handleExplain = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/visualise/explain-step', {
+      const response = await fetch(apiUrl('/api/visualise/explain-step'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
