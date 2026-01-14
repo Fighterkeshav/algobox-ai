@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ const settingsSections = [
 ];
 
 export default function Settings() {
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState("profile");
   const [theme, setTheme] = useState<"dark" | "light" | "system">("dark");
 
@@ -74,7 +76,7 @@ export default function Settings() {
             <div className="space-y-6">
               <div className="flex items-center gap-6">
                 <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-glow-secondary flex items-center justify-center text-2xl font-bold text-primary-foreground">
-                  JD
+                  {user?.email?.slice(0, 2).toUpperCase() || "US"}
                 </div>
                 <Button variant="outline">Change Avatar</Button>
               </div>
@@ -83,23 +85,23 @@ export default function Settings() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" defaultValue="John" />
+                  <Label htmlFor="firstName">Full Name</Label>
+                  <Input id="firstName" defaultValue={user?.user_metadata?.full_name || ""} placeholder="John Doe" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" defaultValue="Doe" />
+                  <Label htmlFor="username">Username</Label>
+                  <Input id="username" defaultValue={user?.user_metadata?.username || ""} placeholder="username" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue="john@example.com" />
+                <Input id="email" type="email" value={user?.email || ""} readOnly className="bg-muted" />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" defaultValue="johndoe" />
+                <Label htmlFor="id">User ID</Label>
+                <Input id="id" value={user?.id || ""} readOnly className="bg-muted font-mono text-xs" />
               </div>
 
               <Button>Save Changes</Button>

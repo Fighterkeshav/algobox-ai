@@ -393,11 +393,11 @@ rl.on('line', (line) => {
     try {
         let args;
         line = line.trim();
-        // Try JSON parse
-        if (line.startsWith('[') || line.startsWith('{')) {
-            args = JSON.parse(line);
-        } else {
-            // Comma-separated
+        // Try to parse as array of arguments by wrapping in []
+        try {
+            args = JSON.parse('[' + line + ']');
+        } catch (e) {
+            // Fallback: splitting by comma (only for simple cases, not recommended for complex structures)
             args = line.split(',').map(p => {
                 p = p.trim();
                 try { return JSON.parse(p); } catch { return p; }

@@ -1,7 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   Map,
@@ -13,8 +21,11 @@ import {
   ChevronRight,
   Sparkles,
   PlayCircle,
+  LogOut,
+  User,
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   label: string;
@@ -37,7 +48,17 @@ interface AppSidebarProps {
 
 export function AppSidebar({ className }: AppSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const userInitials = user?.email?.slice(0, 2).toUpperCase() || "U";
+  const userName = user?.user_metadata?.username || user?.email?.split("@")[0] || "User";
 
   return (
     <aside
@@ -93,15 +114,15 @@ export function AppSidebar({ className }: AppSidebarProps) {
             <p className="mt-1 text-xs text-muted-foreground">
               Get help with your current problem
             </p>
-            <Button variant="default" size="sm" className="mt-3 w-full">
+            <Button variant="default" size="sm" className="mt-3 w-full" onClick={() => navigate("/practice")}>
               Ask AI
             </Button>
           </div>
         </div>
       )}
 
-      {/* Footer */}
-      <div className="border-t border-sidebar-border p-2">
+      {/* Footer with User Menu */}
+      <div className="border-t border-sidebar-border p-2 space-y-1">
         <Link
           to="/settings"
           className={cn(
@@ -111,7 +132,42 @@ export function AppSidebar({ className }: AppSidebarProps) {
           <Settings className="h-5 w-5" />
           {!collapsed && <span>Settings</span>}
         </Link>
+
+        {/* User Profile */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent"
+              )}
+            >
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+              {!collapsed && (
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium truncate">{userName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                </div>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => navigate("/settings")}>
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:text-red-500">
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );
 }
+

@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import {
   Search, Play, ChevronLeft, ChevronRight, Check, X, Loader2,
   Lightbulb, RotateCcw, Eye, Send, Bot, ArrowLeft, Filter,
-  ChevronDown, ThumbsUp, MessageSquare, Bookmark, Share2, Trash2, User
+  ChevronDown, ThumbsUp, MessageSquare, Bookmark, Share2, Trash2, User, Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,9 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { useProgress } from "@/hooks/useProgress";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useNotes } from "@/hooks/useNotes";
 
 type Language = "python" | "javascript" | "cpp";
 type Difficulty = "beginner" | "intermediate" | "advanced";
@@ -38,13 +41,27 @@ export default function Practice() {
   const [code, setCode] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [testResults, setTestResults] = useState<any[]>([]);
-  const [descTab, setDescTab] = useState<"description" | "solutions">("description");
+  const [descTab, setDescTab] = useState<"description" | "solutions" | "notes">("description");
   const [outputTab, setOutputTab] = useState<"testcase" | "result" | "visualization">("testcase");
   const [visualizationData, setVisualizationData] = useState<any>(null);
   const [currentVisStep, setCurrentVisStep] = useState(0);
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [aiInput, setAiInput] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
+
+  // User data hooks
+  const { progress, updateProgress, getSolvedCount } = useProgress();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { saveNote, getNoteForProblem } = useNotes(selectedProblemId || undefined);
+  const [noteContent, setNoteContent] = useState("");
+
+  // Update note content when problem changes
+  useEffect(() => {
+    if (selectedProblemId) {
+      const note = getNoteForProblem(selectedProblemId);
+      setNoteContent(note?.content || "");
+    }
+  }, [selectedProblemId, getNoteForProblem]);
 
   const selectedProblem = useMemo(() =>
     PROBLEMS.find(p => p.id === selectedProblemId) || null
@@ -56,9 +73,16 @@ export default function Practice() {
     return PROBLEMS.filter(p => p.title.toLowerCase().includes(q));
   }, [searchQuery]);
 
+  // Update openProblem to load saved code
   const openProblem = (problem: Problem) => {
     setSelectedProblemId(problem.id);
-    setCode(problem.starterCode[language]);
+    const saved = progress[problem.id];
+    if (saved?.code) {
+      setCode(saved.code);
+      setLanguage((saved.language as Language) || "javascript");
+    } else {
+      setCode(problem.starterCode[language]);
+    }
     setTestResults(problem.testCases.map(tc => ({ ...tc, passed: null })));
     setVisualizationData(null);
     setChatMessages([]);
@@ -70,7 +94,13 @@ export default function Practice() {
 
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
-    if (selectedProblem) setCode(selectedProblem.starterCode[newLang]);
+    // Only reset code if no saved progress or if user confirms
+    if (selectedProblem && !progress[selectedProblem.id]?.code) {
+      setCode(selectedProblem.starterCode[newLang]);
+    } else if (selectedProblem) {
+      // Optional: Prompt user? For now, just keep current code or starter if empty
+      if (!code) setCode(selectedProblem.starterCode[newLang]);
+    }
   };
 
   const handleRun = async (visualize = false) => {
@@ -94,12 +124,25 @@ export default function Practice() {
         setCurrentVisStep(0);
         setOutputTab("visualization");
       } else if (data?.execution?.tests) {
-        setTestResults(selectedProblem.testCases.map((tc, idx) => ({
+        const results = selectedProblem.testCases.map((tc, idx) => ({
           ...tc,
           passed: data.execution.tests[idx]?.passed ?? null,
           actual: data.execution.tests[idx]?.stdout,
-        })));
+        }));
+        setTestResults(results);
         setOutputTab("result");
+
+        // Save progress
+        const allPassed = results.every(r => r.passed);
+        await updateProgress(selectedProblem.id, {
+          status: allPassed ? "solved" : "attempted",
+          code,
+          language,
+        });
+
+        if (allPassed) {
+          toast.success("All tests passed! Problem solved! 🎉");
+        }
       }
     } catch (err: any) {
       toast.error("Execution failed");
@@ -169,21 +212,35 @@ export default function Practice() {
         {/* Problem List */}
         <ScrollArea className="h-[calc(100vh-120px)]">
           <div className="divide-y divide-border">
-            {filteredProblems.map((problem, idx) => (
-              <div
-                key={problem.id}
-                onClick={() => openProblem(problem)}
-                className="px-6 py-3 flex items-center gap-4 hover:bg-muted/30 cursor-pointer transition-colors"
-              >
-                <div className="w-5 text-center">
-                  <Check className="h-4 w-4 text-muted-foreground/30" />
+            {filteredProblems.map((problem, idx) => {
+              const problemProgress = progress[problem.id];
+              const isSolved = problemProgress?.status === "solved";
+              const isAttempted = problemProgress?.status === "attempted";
+              const isFav = isFavorite(problem.id);
+
+              return (
+                <div
+                  key={problem.id}
+                  onClick={() => openProblem(problem)}
+                  className="px-6 py-3 flex items-center gap-4 hover:bg-muted/30 cursor-pointer transition-colors"
+                >
+                  <div className="w-5 text-center">
+                    {isSolved ? (
+                      <Check className="h-4 w-4 text-emerald-500" />
+                    ) : isAttempted ? (
+                      <div className="h-4 w-4 rounded-full border-2 border-amber-500" />
+                    ) : (
+                      <div className="h-4 w-4 rounded-full border border-muted-foreground/30" />
+                    )}
+                  </div>
+                  <span className="flex-1 text-sm">{idx + 1}. {problem.title}</span>
+                  {isFav && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
+                  <span className={cn("text-xs font-medium", DIFFICULTY_CONFIG[problem.difficulty].color)}>
+                    {DIFFICULTY_CONFIG[problem.difficulty].label}
+                  </span>
                 </div>
-                <span className="flex-1 text-sm">{idx + 1}. {problem.title}</span>
-                <span className={cn("text-xs font-medium", DIFFICULTY_CONFIG[problem.difficulty].color)}>
-                  {DIFFICULTY_CONFIG[problem.difficulty].label}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </div>
@@ -221,13 +278,19 @@ export default function Practice() {
               <TabsList className="h-10 w-full justify-start rounded-none border-b border-border bg-transparent px-4 gap-4">
                 <TabsTrigger value="description" className="text-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Description</TabsTrigger>
                 <TabsTrigger value="solutions" className="text-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Solutions</TabsTrigger>
+                <TabsTrigger value="notes" className="text-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Notes</TabsTrigger>
               </TabsList>
 
               <TabsContent value="description" className="flex-1 overflow-auto p-4 mt-0">
                 <div className="space-y-4">
                   {/* Title */}
                   <div>
-                    <h1 className="text-xl font-medium">{filteredProblems.findIndex(p => p.id === selectedProblemId) + 1}. {selectedProblem.title}</h1>
+                    <div className="flex items-center justify-between">
+                      <h1 className="text-xl font-medium">{filteredProblems.findIndex(p => p.id === selectedProblemId) + 1}. {selectedProblem.title}</h1>
+                      <Button variant="ghost" size="icon-sm" onClick={() => toggleFavorite(selectedProblem.id)}>
+                        <Star className={cn("h-5 w-5", isFavorite(selectedProblem.id) ? "fill-amber-500 text-amber-500" : "text-muted-foreground")} />
+                      </Button>
+                    </div>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="outline" className={cn("text-xs border-0", DIFFICULTY_CONFIG[selectedProblem.difficulty].color, "bg-current/10")}>
                         {DIFFICULTY_CONFIG[selectedProblem.difficulty].label}
@@ -282,6 +345,20 @@ export default function Practice() {
 
               <TabsContent value="solutions" className="flex-1 overflow-auto p-4 mt-0">
                 <div className="text-sm text-muted-foreground">Solutions will appear here after solving the problem.</div>
+              </TabsContent>
+              <TabsContent value="notes" className="flex-1 overflow-auto p-4 mt-0">
+                <div className="flex flex-col h-full gap-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold">My Notes</h2>
+                    <Button size="sm" onClick={() => saveNote(selectedProblem.id, noteContent).then(() => toast.success("Note saved!"))}>Save Note</Button>
+                  </div>
+                  <textarea
+                    className="flex-1 w-full p-4 rounded-md border border-border bg-muted/30 resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Write your notes, thoughts, or pseudo-code here..."
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           </div>

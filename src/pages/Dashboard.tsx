@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,37 +13,89 @@ import {
   CheckCircle2,
   Play,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-// Mock data - would come from API
-const currentProgress = {
-  completedProblems: 47,
-  totalProblems: 150,
-  currentStreak: 12,
-  longestStreak: 23,
-  hoursThisWeek: 8.5,
-  skillLevel: "Intermediate",
-};
-
-const recentProblems = [
-  { id: 1, title: "Two Sum", difficulty: "beginner", status: "completed", time: "5 min ago" },
-  { id: 2, title: "Valid Parentheses", difficulty: "beginner", status: "completed", time: "1 hour ago" },
-  { id: 3, title: "Merge Two Sorted Lists", difficulty: "intermediate", status: "in-progress", time: "2 hours ago" },
-];
-
-const recommendedTopics = [
-  { id: 1, name: "Dynamic Programming", progress: 35, problems: 12 },
-  { id: 2, name: "Binary Search", progress: 60, problems: 8 },
-  { id: 3, name: "Graph Traversal", progress: 15, problems: 15 },
-];
-
-const upcomingMilestones = [
-  { id: 1, title: "Complete Arrays Module", progress: 85, reward: "Array Master Badge" },
-  { id: 2, title: "30-Day Streak", progress: 40, reward: "Consistency Champion" },
-];
+import { useProgress } from "@/hooks/useProgress";
+import { PROBLEMS, getCategories } from "@/lib/problems/problemLibrary";
+import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
+  const { progress, loading, getSolvedCount } = useProgress();
+
+  // 1. Stats Calculation
+  const totalProblems = PROBLEMS.length;
+  const completedProblems = getSolvedCount();
+
+  // Calculate Streak (Simplified: count unique days with solved problems)
+  const streak = useMemo(() => {
+    const solvedDates = Object.values(progress)
+      .filter(p => p.status === "solved" && p.solved_at)
+      .map(p => p.solved_at!.split('T')[0]); // YYYY-MM-DD
+    const uniqueDays = new Set(solvedDates);
+    return uniqueDays.size;
+  }, [progress]);
+
+  // Skill Level based on solved count
+  const skillLevel = useMemo(() => {
+    if (completedProblems < 5) return "Beginner";
+    if (completedProblems < 20) return "Intermediate";
+    return "Advanced";
+  }, [completedProblems]);
+
+  // 2. Recent Activity
+  const recentProblems = useMemo(() => {
+    // Get all started/solved problems
+    const active = Object.values(progress).filter(p => p.status !== "not_started");
+    // Sort by solved_at (newest first) - fallback to nothing if no date (though attempted usually implies interaction)
+    // Since we don't strictly track "last attempted" date for "attempted" status in this simple hook version,
+    // we'll prioritize solved ones or just list them. 
+    // Ideally we'd add 'last_updated' to the hook, but for now let's show solved/attempted.
+    return active
+      .sort((a, b) => {
+        const dateA = a.solved_at ? new Date(a.solved_at).getTime() : 0;
+        const dateB = b.solved_at ? new Date(b.solved_at).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 3)
+      .map(p => {
+        const problem = PROBLEMS.find(prob => prob.id === p.problem_id);
+        if (!problem) return null;
+        return {
+          id: problem.id,
+          title: problem.title,
+          difficulty: problem.difficulty,
+          status: p.status === "solved" ? "completed" : "in-progress",
+          time: p.solved_at ? formatDistanceToNow(new Date(p.solved_at), { addSuffix: true }) : "Recently",
+        };
+      })
+      .filter(Boolean); // Remove nulls
+  }, [progress]);
+
+  // 3. Recommended Topics / Category Progress
+  const categoryStats = useMemo(() => {
+    const categories = getCategories();
+    return categories.map(cat => {
+      const catProblems = PROBLEMS.filter(p => p.category === cat);
+      const solvedInCat = catProblems.filter(p => progress[p.id]?.status === "solved").length;
+      const percent = catProblems.length > 0 ? Math.round((solvedInCat / catProblems.length) * 100) : 0;
+      return {
+        id: cat,
+        name: cat,
+        progress: percent,
+        problems: catProblems.length,
+        solved: solvedInCat
+      };
+    })
+      .sort((a, b) => b.progress - a.progress) // Show most progressed first? Or least? Let's show most active.
+      .slice(0, 3);
+  }, [progress]);
+
+
+  if (loading) {
+    return <div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
@@ -65,28 +118,28 @@ export default function Dashboard() {
         <StatCard
           icon={<Target className="h-5 w-5" />}
           label="Problems Solved"
-          value={currentProgress.completedProblems.toString()}
-          subtext={`of ${currentProgress.totalProblems} total`}
+          value={completedProblems.toString()}
+          subtext={`of ${totalProblems} total`}
           color="primary"
         />
         <StatCard
           icon={<Flame className="h-5 w-5" />}
-          label="Current Streak"
-          value={`${currentProgress.currentStreak} days`}
-          subtext={`Best: ${currentProgress.longestStreak} days`}
+          label="Total Activity" // Changed from Streak as we calculate total days active
+          value={`${streak} days`}
+          subtext="Keep grinding!"
           color="warning"
         />
         <StatCard
           icon={<Clock className="h-5 w-5" />}
-          label="Hours This Week"
-          value={currentProgress.hoursThisWeek.toString()}
-          subtext="+2.5 from last week"
+          label="Est. Hours"
+          value={(completedProblems * 0.5).toFixed(1)} // Rough estimate: 30 mins per problem
+          subtext="Based on solved count"
           color="success"
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
           label="Skill Level"
-          value={currentProgress.skillLevel}
+          value={skillLevel}
           subtext="Keep it up!"
           color="accent"
         />
@@ -103,26 +156,25 @@ export default function Dashboard() {
             className="rounded-xl border border-border bg-card p-6"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Continue Learning</h2>
+              <h2 className="text-lg font-semibold">Recent Activity</h2>
               <Link to="/practice">
                 <Button variant="ghost" size="sm">
                   View All <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
             </div>
-            
+
             <div className="space-y-3">
-              {recentProblems.map((problem) => (
+              {recentProblems.length > 0 ? recentProblems.map((problem: any) => (
                 <div
                   key={problem.id}
                   className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/50"
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`rounded-lg p-2 ${
-                      problem.status === "completed" 
-                        ? "bg-success/10 text-success" 
+                    <div className={`rounded-lg p-2 ${problem.status === "completed"
+                        ? "bg-success/10 text-success"
                         : "bg-warning/10 text-warning"
-                    }`}>
+                      }`}>
                       {problem.status === "completed" ? (
                         <CheckCircle2 className="h-5 w-5" />
                       ) : (
@@ -140,13 +192,20 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  <Link to="/practice">
+                  <Link to={`/practice?id=${problem.id}`}>
                     <Button variant="outline" size="sm">
                       {problem.status === "completed" ? "Review" : "Continue"}
                     </Button>
                   </Link>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No recent activity.</p>
+                  <Link to="/practice">
+                    <Button variant="link" className="mt-2">Start your first problem!</Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -160,7 +219,7 @@ export default function Dashboard() {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold">AI Recommended</h2>
+                <h2 className="text-lg font-semibold">Topic Progress</h2>
               </div>
               <Link to="/roadmap">
                 <Button variant="ghost" size="sm">
@@ -170,12 +229,12 @@ export default function Dashboard() {
             </div>
 
             <div className="space-y-4">
-              {recommendedTopics.map((topic) => (
+              {categoryStats.map((topic) => (
                 <div key={topic.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{topic.name}</span>
                     <span className="text-sm text-muted-foreground">
-                      {topic.problems} problems
+                      {topic.solved} / {topic.problems} solved
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -213,26 +272,33 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Milestones */}
+          {/* Milestones (Simplified for now since we don't have complex milestone logic yet) */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="rounded-xl border border-border bg-card p-6"
           >
-            <h3 className="mb-4 text-lg font-semibold">Upcoming Milestones</h3>
+            <h3 className="mb-4 text-lg font-semibold">Next Milestone</h3>
             <div className="space-y-4">
-              {upcomingMilestones.map((milestone) => (
-                <div key={milestone.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{milestone.title}</span>
-                  </div>
-                  <Progress value={milestone.progress} />
-                  <p className="text-xs text-muted-foreground">
-                    Reward: {milestone.reward}
-                  </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Solve 10 Problems</span>
                 </div>
-              ))}
+                <Progress value={Math.min((completedProblems / 10) * 100, 100)} />
+                <p className="text-xs text-muted-foreground">
+                  Award: Problem Solver Badge
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Solve 50 Problems</span>
+                </div>
+                <Progress value={Math.min((completedProblems / 50) * 100, 100)} />
+                <p className="text-xs text-muted-foreground">
+                  Award: Master Coder Badge
+                </p>
+              </div>
             </div>
           </motion.div>
         </div>
