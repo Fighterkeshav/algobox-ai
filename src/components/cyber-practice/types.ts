@@ -8,6 +8,7 @@ export interface SecurityChallenge {
     id: string;
     title: string;
     description: string;
+    type?: "fix" | "exploit" | "analyze";
     difficulty: "Beginner" | "Intermediate" | "Advanced";
     vulnerableCode: string;
     instructions: string;
