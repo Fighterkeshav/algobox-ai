@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import {
   ArrowRight,
   Code2,
@@ -102,10 +103,21 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
+        className="mb-8 flex flex-col-reverse gap-4 md:flex-row md:items-center md:justify-between"
       >
-        <h1 className="text-2xl font-bold">Welcome back! 👋</h1>
-        <p className="text-sm text-muted-foreground">Continue your learning journey</p>
+        <div>
+          <h1 className="text-2xl font-bold md:text-3xl lg:text-4xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Welcome back! 👋
+          </h1>
+          <p className="mt-2 text-muted-foreground">Continue your learning journey</p>
+        </div>
+        <div className="h-32 w-32 md:h-40 md:w-40">
+          <DotLottieReact
+            src="https://lottie.host/519b609d-eb4b-4d6e-a5cc-190163f44419/OGhUSxI2BL.lottie"
+            loop
+            autoplay
+          />
+        </div>
       </motion.div>
 
       {/* Stats Grid */}
@@ -113,7 +125,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
           icon={<Target className="h-4 w-4" />}
@@ -145,18 +157,18 @@ export default function Dashboard() {
         />
       </motion.div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Content */}
-        <div className="space-y-4 lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
           {/* Continue Learning */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-lg border border-border bg-card p-5"
+            className="rounded-xl border border-border bg-card p-6"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-semibold">Recent Activity</h2>
+              <h2 className="font-semibold text-lg">Recent Activity</h2>
               <Link to="/practice">
                 <Button variant="ghost" size="sm" className="text-xs">
                   View All <ArrowRight className="ml-1 h-3 w-3" />
@@ -164,27 +176,27 @@ export default function Dashboard() {
               </Link>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {recentProblems.length > 0 ? recentProblems.map((problem: any) => (
                 <div
                   key={problem.id}
-                  className="flex items-center justify-between rounded-md border border-border bg-background p-3 transition-colors hover:border-primary/40"
+                  className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/40"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`rounded-md p-1.5 ${problem.status === "completed"
-                        ? "bg-success/10 text-success"
-                        : "bg-warning/10 text-warning"
+                  <div className="flex items-center gap-4">
+                    <div className={`rounded-lg p-2 ${problem.status === "completed"
+                      ? "bg-success/10 text-success"
+                      : "bg-warning/10 text-warning"
                       }`}>
                       {problem.status === "completed" ? (
-                        <CheckCircle2 className="h-4 w-4" />
+                        <CheckCircle2 className="h-5 w-5" />
                       ) : (
-                        <Play className="h-4 w-4" />
+                        <Play className="h-5 w-5" />
                       )}
                     </div>
                     <div>
                       <h3 className="text-sm font-medium">{problem.title}</h3>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant={problem.difficulty as "beginner" | "intermediate" | "advanced"} className="text-[10px] px-1.5 py-0">
+                        <Badge variant={problem.difficulty as "beginner" | "intermediate" | "advanced"} className="text-[10px] px-2 py-0.5">
                           {problem.difficulty}
                         </Badge>
                         <span>•</span>
@@ -199,7 +211,7 @@ export default function Dashboard() {
                   </Link>
                 </div>
               )) : (
-                <div className="text-center py-6 text-muted-foreground">
+                <div className="text-center py-8 text-muted-foreground">
                   <p className="text-sm">No recent activity.</p>
                   <Link to="/practice">
                     <Button variant="link" size="sm" className="mt-1 text-xs">Start your first problem!</Button>
@@ -214,12 +226,12 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="rounded-lg border border-border bg-card p-5"
+            className="rounded-xl border border-border bg-card p-6"
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <h2 className="font-semibold">Topic Progress</h2>
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold text-lg">Topic Progress</h2>
               </div>
               <Link to="/roadmap">
                 <Button variant="ghost" size="sm" className="text-xs">
@@ -228,17 +240,17 @@ export default function Dashboard() {
               </Link>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {categoryStats.map((topic) => (
-                <div key={topic.id} className="space-y-1.5">
+                <div key={topic.id} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{topic.name}</span>
                     <span className="text-xs text-muted-foreground">
                       {topic.solved} / {topic.problems}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Progress value={topic.progress} className="flex-1 h-1.5" />
+                  <div className="flex items-center gap-3">
+                    <Progress value={topic.progress} className="flex-1 h-2" />
                     <span className="text-xs font-medium text-primary w-8">{topic.progress}%</span>
                   </div>
                 </div>
@@ -248,25 +260,39 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Quick Practice */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="rounded-lg border border-border bg-card p-5"
+            className="rounded-xl border border-border bg-card p-6 relative overflow-hidden"
           >
-            <Code2 className="mb-3 h-8 w-8 text-primary" />
-            <h3 className="mb-1.5 font-semibold">Quick Practice</h3>
-            <p className="mb-4 text-xs text-muted-foreground">
-              AI will select the best problem for you based on your progress.
-            </p>
-            <Link to="/practice">
-              <Button size="sm" className="w-full">
-                Start Now
-                <ArrowRight className="ml-2 h-3 w-3" />
-              </Button>
-            </Link>
+            <div className="relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <Code2 className="h-8 w-8 text-primary" />
+                <div className="h-20 w-20 -mt-2 -mr-2 opacity-90">
+                  <DotLottieReact
+                    src="https://lottie.host/04bf57ab-2b8c-4088-8041-b7c14fea6aea/8sRGvO0CxH.lottie"
+                    loop
+                    autoplay
+                  />
+                </div>
+              </div>
+              <h3 className="mb-2 font-semibold text-lg">Quick Practice</h3>
+              <p className="mb-6 text-sm text-muted-foreground">
+                AI will select the best problem for you based on your progress.
+              </p>
+              <Link to="/practice">
+                <Button size="sm" className="w-full font-semibold">
+                  Start Now
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Decorative background gradient */}
+            <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full blur-3xl -z-0" />
           </motion.div>
 
           {/* Milestones */}
@@ -274,25 +300,25 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="rounded-lg border border-border bg-card p-5"
+            className="rounded-xl border border-border bg-card p-6"
           >
-            <h3 className="mb-3 font-semibold">Next Milestone</h3>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
+            <h3 className="mb-4 font-semibold text-lg">Next Milestone</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Solve 10 Problems</span>
                 </div>
-                <Progress value={Math.min((completedProblems / 10) * 100, 100)} className="h-1.5" />
-                <p className="text-[10px] text-muted-foreground">
+                <Progress value={Math.min((completedProblems / 10) * 100, 100)} className="h-2" />
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                   Problem Solver Badge
                 </p>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Solve 50 Problems</span>
                 </div>
-                <Progress value={Math.min((completedProblems / 50) * 100, 100)} className="h-1.5" />
-                <p className="text-[10px] text-muted-foreground">
+                <Progress value={Math.min((completedProblems / 50) * 100, 100)} className="h-2" />
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                   Master Coder Badge
                 </p>
               </div>
