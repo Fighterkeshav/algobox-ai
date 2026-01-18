@@ -1,11 +1,8 @@
-import { useMemo, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowRight,
   Code2,
@@ -22,9 +19,14 @@ import { Link } from "react-router-dom";
 import { useProgress } from "@/hooks/useProgress";
 import { PROBLEMS, getCategories } from "@/lib/problems/problemLibrary";
 import { formatDistanceToNow } from "date-fns";
-
-// Register GSAP plugins
-gsap.registerPlugin(ScrollTrigger);
+import {
+  useScrollAnimation,
+  useStaggerAnimation,
+  useTextReveal,
+  useGlitchEffect,
+  useCountUp,
+  useHoverAnimation
+} from "@/lib/animations";
 
 export default function Dashboard() {
   const { progress, loading, getSolvedCount } = useProgress();
@@ -33,16 +35,16 @@ export default function Dashboard() {
   const totalProblems = PROBLEMS.length;
   const completedProblems = getSolvedCount();
 
-  // Calculate Streak (Simplified: count unique days with solved problems)
+  // Calculate Streak
   const streak = useMemo(() => {
     const solvedDates = Object.values(progress)
       .filter(p => p.status === "solved" && p.solved_at)
-      .map(p => p.solved_at!.split('T')[0]); // YYYY-MM-DD
+      .map(p => p.solved_at!.split('T')[0]);
     const uniqueDays = new Set(solvedDates);
     return uniqueDays.size;
   }, [progress]);
 
-  // Skill Level based on solved count
+  // Skill Level
   const skillLevel = useMemo(() => {
     if (completedProblems < 5) return "Beginner";
     if (completedProblems < 20) return "Intermediate";
@@ -51,12 +53,7 @@ export default function Dashboard() {
 
   // 2. Recent Activity
   const recentProblems = useMemo(() => {
-    // Get all started/solved problems
     const active = Object.values(progress).filter(p => p.status !== "not_started");
-    // Sort by solved_at (newest first) - fallback to nothing if no date (though attempted usually implies interaction)
-    // Since we don't strictly track "last attempted" date for "attempted" status in this simple hook version,
-    // we'll prioritize solved ones or just list them. 
-    // Ideally we'd add 'last_updated' to the hook, but for now let's show solved/attempted.
     return active
       .sort((a, b) => {
         const dateA = a.solved_at ? new Date(a.solved_at).getTime() : 0;
@@ -75,10 +72,10 @@ export default function Dashboard() {
           time: p.solved_at ? formatDistanceToNow(new Date(p.solved_at), { addSuffix: true }) : "Recently",
         };
       })
-      .filter(Boolean); // Remove nulls
+      .filter(Boolean);
   }, [progress]);
 
-  // 3. Recommended Topics / Category Progress
+  // 3. Recommended Topics
   const categoryStats = useMemo(() => {
     const categories = getCategories();
     return categories.map(cat => {
@@ -93,10 +90,17 @@ export default function Dashboard() {
         solved: solvedInCat
       };
     })
-      .sort((a, b) => b.progress - a.progress) // Show most progressed first? Or least? Let's show most active.
+      .sort((a, b) => b.progress - a.progress)
       .slice(0, 3);
   }, [progress]);
 
+  // Animation Refs
+  const headerRef = useScrollAnimation({ animation: "fadeInDown", delay: 0.1 }); // Header entry
+  const statsRef = useScrollAnimation({ animation: "fadeInUp", stagger: 0.1, delay: 0.2 }); // Stats Grid
+  const recentActivityRef = useScrollAnimation({ animation: "fadeInLeft", delay: 0.3 }); // Main Content
+  const sidebarRef = useScrollAnimation({ animation: "fadeInRight", delay: 0.4, stagger: 0.2 }); // Sidebar items
+  const welcomeTextRef = useTextReveal(); // "Welcome back!" reveal
+  const glitchRef = useGlitchEffect(); // Glitch effect on Lottie container
 
   if (loading) {
     return <div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -105,71 +109,68 @@ export default function Dashboard() {
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex flex-col-reverse gap-4 md:flex-row md:items-center md:justify-between"
+      <div
+        ref={headerRef}
+        className="mb-8 flex flex-col-reverse gap-4 md:flex-row md:items-center md:justify-between" // Start opacity 0 for GSAP
       >
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl lg:text-4xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h1 ref={welcomeTextRef} className="text-2xl font-bold md:text-3xl lg:text-4xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent overflow-hidden pb-1">
             Welcome back! 👋
           </h1>
           <p className="mt-2 text-muted-foreground">Continue your learning journey</p>
         </div>
-        <div className="h-32 w-32 md:h-40 md:w-40">
+        <div ref={glitchRef} className="h-32 w-32 md:h-40 md:w-40 cursor-pointer">
           <DotLottieReact
             src="https://lottie.host/519b609d-eb4b-4d6e-a5cc-190163f44419/OGhUSxI2BL.lottie"
             loop
             autoplay
           />
         </div>
-      </motion.div>
+      </div>
 
       {/* Stats Grid */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+      <div
+        ref={statsRef}
         className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
           icon={<Target className="h-4 w-4" />}
           label="Problems Solved"
-          value={completedProblems.toString()}
+          value={completedProblems}
           subtext={`of ${totalProblems} total`}
           color="primary"
         />
         <StatCard
           icon={<Flame className="h-4 w-4" />}
           label="Total Activity"
-          value={`${streak} days`}
+          value={streak}
+          suffix=" days"
           subtext="Keep grinding!"
           color="warning"
         />
         <StatCard
           icon={<Clock className="h-4 w-4" />}
           label="Est. Hours"
-          value={(completedProblems * 0.5).toFixed(1)}
+          value={completedProblems * 0.5}
+          isFloat
           subtext="Based on solved count"
           color="success"
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Skill Level"
-          value={skillLevel}
+          displayValue={skillLevel} // String value, no count up
           subtext="Keep it up!"
           color="accent"
         />
-      </motion.div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Content */}
         <div className="space-y-6 lg:col-span-2">
           {/* Continue Learning */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+          <div
+            ref={recentActivityRef}
             className="rounded-xl border border-border bg-card p-6"
           >
             <div className="mb-4 flex items-center justify-between">
@@ -183,38 +184,7 @@ export default function Dashboard() {
 
             <div className="space-y-3">
               {recentProblems.length > 0 ? recentProblems.map((problem: any) => (
-                <div
-                  key={problem.id}
-                  className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/40"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`rounded-lg p-2 ${problem.status === "completed"
-                      ? "bg-success/10 text-success"
-                      : "bg-warning/10 text-warning"
-                      }`}>
-                      {problem.status === "completed" ? (
-                        <CheckCircle2 className="h-5 w-5" />
-                      ) : (
-                        <Play className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium">{problem.title}</h3>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant={problem.difficulty as "beginner" | "intermediate" | "advanced"} className="text-[10px] px-2 py-0.5">
-                          {problem.difficulty}
-                        </Badge>
-                        <span>•</span>
-                        <span>{problem.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Link to={`/practice?id=${problem.id}`}>
-                    <Button variant="ghost" size="sm" className="text-xs">
-                      {problem.status === "completed" ? "Review" : "Continue"}
-                    </Button>
-                  </Link>
-                </div>
+                <RecentProblemItem key={problem.id} problem={problem} />
               )) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <p className="text-sm">No recent activity.</p>
@@ -224,89 +194,25 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
 
           {/* Recommended Topics */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+          <div
+            // Re-using scroll animation hook logic implicitly via container if needed,
+            // or just let it flow. Let's add another ref for this if we want distinct animation
             className="rounded-xl border border-border bg-card p-6"
           >
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold text-lg">Topic Progress</h2>
-              </div>
-              <Link to="/roadmap">
-                <Button variant="ghost" size="sm" className="text-xs">
-                  Full Roadmap <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="space-y-4">
-              {categoryStats.map((topic) => (
-                <div key={topic.id} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{topic.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {topic.solved} / {topic.problems}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Progress value={topic.progress} className="flex-1 h-2" />
-                    <span className="text-xs font-medium text-primary w-8">{topic.progress}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+            <TopicProgressSection categoryStats={categoryStats} />
+          </div>
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div ref={sidebarRef} className="space-y-6">
           {/* Quick Practice */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="rounded-xl border border-border bg-card p-6 relative overflow-hidden"
-          >
-            <div className="relative z-10">
-              <div className="flex items-start justify-between mb-4">
-                <Code2 className="h-8 w-8 text-primary" />
-                <div className="h-20 w-20 -mt-2 -mr-2 opacity-90">
-                  <DotLottieReact
-                    src="https://lottie.host/04bf57ab-2b8c-4088-8041-b7c14fea6aea/8sRGvO0CxH.lottie"
-                    loop
-                    autoplay
-                  />
-                </div>
-              </div>
-              <h3 className="mb-2 font-semibold text-lg">Quick Practice</h3>
-              <p className="mb-6 text-sm text-muted-foreground">
-                AI will select the best problem for you based on your progress.
-              </p>
-              <Link to="/practice">
-                <Button size="sm" className="w-full font-semibold">
-                  Start Now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Decorative background gradient */}
-            <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full blur-3xl -z-0" />
-          </motion.div>
+          <QuickPracticeCard />
 
           {/* Milestones */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="rounded-xl border border-border bg-card p-6"
-          >
+          <div className="rounded-xl border border-border bg-card p-6">
             <h3 className="mb-4 font-semibold text-lg">Next Milestone</h3>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -328,22 +234,66 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// --- Sub-components with internal animations ---
+
+function RecentProblemItem({ problem }: { problem: any }) {
+  const ref = useHoverAnimation(1.02); // Subtle hover scale
+  return (
+    <div
+      ref={ref}
+      className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/40 cursor-default"
+    >
+      <div className="flex items-center gap-4">
+        <div className={`rounded-lg p-2 ${problem.status === "completed"
+          ? "bg-success/10 text-success"
+          : "bg-warning/10 text-warning"
+          }`}>
+          {problem.status === "completed" ? (
+            <CheckCircle2 className="h-5 w-5" />
+          ) : (
+            <Play className="h-5 w-5" />
+          )}
+        </div>
+        <div>
+          <h3 className="text-sm font-medium">{problem.title}</h3>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant={problem.difficulty as "beginner" | "intermediate" | "advanced"} className="text-[10px] px-2 py-0.5">
+              {problem.difficulty}
+            </Badge>
+            <span>•</span>
+            <span>{problem.time}</span>
+          </div>
+        </div>
+      </div>
+      <Link to={`/practice?id=${problem.id}`}>
+        <Button variant="ghost" size="sm" className="text-xs">
+          {problem.status === "completed" ? "Review" : "Continue"}
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+
 interface StatCardProps {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  value?: number | string;
+  displayValue?: string;
   subtext: string;
   color: "primary" | "success" | "warning" | "accent";
+  suffix?: string;
+  isFloat?: boolean;
 }
 
-function StatCard({ icon, label, value, subtext, color }: StatCardProps) {
+function StatCard({ icon, label, value, displayValue, subtext, color, suffix = "", isFloat = false }: StatCardProps) {
   const colorClasses = {
     primary: "bg-primary/10 text-primary",
     success: "bg-success/10 text-success",
@@ -351,14 +301,97 @@ function StatCard({ icon, label, value, subtext, color }: StatCardProps) {
     accent: "bg-accent/10 text-accent",
   };
 
+  const countRef = useRef<HTMLDivElement>(null);
+
+  // Use CountUp hook if value is a number
+  useCountUp(typeof value === 'number' ? value : 0, 2);
+
   return (
     <div className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30">
       <div className={`mb-2 inline-flex rounded-md p-1.5 ${colorClasses[color]}`}>
         {icon}
       </div>
-      <div className="text-xl font-bold">{value}</div>
+      <div className="text-xl font-bold flex items-baseline">
+        {typeof value === 'number' ? (
+          <span ref={countRef}>{isFloat ? value.toFixed(1) : value}</span>
+        ) : (
+          <span>{displayValue || value}</span>
+        )}
+        {suffix && <span className="ml-1 text-sm font-normal text-muted-foreground">{suffix}</span>}
+      </div>
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-0.5 text-[10px] text-muted-foreground">{subtext}</div>
+    </div>
+  );
+}
+
+function TopicProgressSection({ categoryStats }: { categoryStats: any[] }) {
+  const ref = useStaggerAnimation(0.1, "fadeInUp");
+  return (
+    <>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold text-lg">Topic Progress</h2>
+        </div>
+        <Link to="/roadmap">
+          <Button variant="ghost" size="sm" className="text-xs">
+            Full Roadmap <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
+        </Link>
+      </div>
+      <div ref={ref} className="space-y-4">
+        {categoryStats.map((topic) => (
+          <div key={topic.id} className="space-y-2"> {/* Start invisible for stagger */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">{topic.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {topic.solved} / {topic.problems}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Progress value={topic.progress} className="flex-1 h-2" />
+              <span className="text-xs font-medium text-primary w-8">{topic.progress}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function QuickPracticeCard() {
+  const glitchRef = useGlitchEffect();
+  return (
+    <div
+      ref={glitchRef}  // Apply glitch effect to the whole card interaction
+      className="rounded-xl border border-border bg-card p-6 relative overflow-hidden"
+    >
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-4">
+          <Code2 className="h-8 w-8 text-primary" />
+          <div className="h-20 w-20 -mt-2 -mr-2 opacity-90">
+            <DotLottieReact
+              src="https://lottie.host/04bf57ab-2b8c-4088-8041-b7c14fea6aea/8sRGvO0CxH.lottie"
+              loop
+              autoplay
+            />
+          </div>
+        </div>
+        <h3 className="mb-2 font-semibold text-lg">Quick Practice</h3>
+        <p className="mb-6 text-sm text-muted-foreground">
+          AI will select the best problem for you based on your progress.
+        </p>
+        <Link to="/practice">
+          <Button size="sm" className="w-full font-semibold">
+            Start Now
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+
+      {/* Decorative background gradient */}
+      <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full blur-3xl -z-0" />
     </div>
   );
 }

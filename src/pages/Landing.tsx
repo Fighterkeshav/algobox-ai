@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +15,12 @@ import {
   Target,
   ChevronRight,
 } from "lucide-react";
+import {
+  useScrollAnimation,
+  useStaggerAnimation,
+  useTextReveal,
+  useHoverAnimation
+} from "@/lib/animations";
 
 const features = [
   {
@@ -48,6 +53,11 @@ const features = [
     title: "Progress Analytics",
     description: "Skill heatmaps, mistake patterns, and consistency tracking to optimize your learning.",
   },
+  {
+    icon: <Target className="h-6 w-6" />,
+    title: "Gamified Learning",
+    description: "Earn badges, maintain streaks, and climb the leaderboard as you master new algorithms.",
+  },
 ];
 
 const stats = [
@@ -57,6 +67,12 @@ const stats = [
 ];
 
 export default function Landing() {
+  const heroRef = useScrollAnimation({ animation: "fadeInUp", delay: 0.1 });
+  const titleRef = useTextReveal(); // For "Master Algorithms..."
+  const featuresRef = useStaggerAnimation(0.1, "fadeInUp");
+  const statsRef = useStaggerAnimation(0.2, "scaleIn");
+  const ctaRef = useScrollAnimation({ animation: "scaleIn", delay: 0.2 });
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Subtle Animated Background */}
@@ -69,9 +85,12 @@ export default function Landing() {
           <Logo size="md" />
           <div className="flex items-center gap-3">
             <Link to="/dashboard">
-              <Button variant="ghost" size="sm">Dashboard</Button>
+              {/* <Button variant="ghost" size="sm">Dashboard</Button> */}
             </Link>
-            <Link to="/dashboard">
+            <Link to="/login">
+              <Button variant="ghost" size="sm">Login</Button>
+            </Link>
+            <Link to="/signup">
               <Button size="sm" className="group">
                 Get Started
                 <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -84,32 +103,30 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="relative pt-28 pb-16">
         <div className="container relative mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+          <div
+            ref={heroRef}
             className="mx-auto max-w-3xl text-center"
           >
             <Badge variant="outline" className="mb-5 text-xs font-medium">
               <Zap className="mr-1.5 h-3 w-3" />
               AI-Powered Learning Platform
             </Badge>
-            
+
             <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-              Master Algorithms with
-              <span className="block text-primary mt-1">
+              <span ref={titleRef} className="block">Master Algorithms with</span>
+              <span className="block text-primary mt-1 bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
                 AI-Guided Precision
               </span>
             </h1>
-            
+
             <p className="mx-auto mb-8 max-w-xl text-base text-muted-foreground md:text-lg">
-              Transform into an industry-ready problem solver through 
+              Transform into an industry-ready problem solver through
               adaptive roadmaps, real-time AI debugging, and personalized practice.
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link to="/dashboard">
-                <Button size="lg" className="group">
+              <Link to="/signup">
+                <Button size="lg" className="group animate-pulse hover:animate-none">
                   Start Your Journey
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
@@ -122,11 +139,9 @@ export default function Landing() {
             </div>
 
             {/* Stats */}
-            <motion.div 
+            <div
+              ref={statsRef}
               className="mt-12 flex items-center justify-center gap-8 md:gap-12"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
             >
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
@@ -136,8 +151,8 @@ export default function Landing() {
                   <div className="text-xs text-muted-foreground md:text-sm">{stat.label}</div>
                 </div>
               ))}
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -153,23 +168,9 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div ref={featuresRef} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group relative rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/40"
-              >
-                <div className="mb-3 inline-flex rounded-md bg-primary/10 p-2.5 text-primary">
-                  {feature.icon}
-                </div>
-                <h3 className="mb-1.5 font-semibold">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-                <ChevronRight className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
-              </motion.div>
+              <FeatureCard key={feature.title} feature={feature} />
             ))}
           </div>
         </div>
@@ -178,14 +179,14 @@ export default function Landing() {
       {/* CTA Section */}
       <section className="py-16 relative">
         <div className="container mx-auto px-4">
-          <div className="relative overflow-hidden rounded-xl border border-border bg-card p-8 md:p-10 text-center">
+          <div ref={ctaRef} className="relative overflow-hidden rounded-xl border border-border bg-card p-8 md:p-10 text-center">
             <h2 className="mb-3 text-2xl font-bold md:text-3xl">
               Ready to Transform Your Coding Skills?
             </h2>
             <p className="mx-auto mb-6 max-w-lg text-sm text-muted-foreground md:text-base">
               Join developers who are using Algobox to master algorithms and land their dream jobs.
             </p>
-            <Link to="/dashboard">
+            <Link to="/signup">
               <Button size="lg">
                 Start Learning Now
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -204,6 +205,23 @@ export default function Landing() {
           </p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function FeatureCard({ feature }: { feature: any }) {
+  const ref = useHoverAnimation(1.05); // Add hover effect to features
+  return (
+    <div
+      ref={ref}
+      className="group relative rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/40" // Start invisible for stagger
+    >
+      <div className="mb-3 inline-flex rounded-md bg-primary/10 p-2.5 text-primary">
+        {feature.icon}
+      </div>
+      <h3 className="mb-1.5 font-semibold">{feature.title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+      <ChevronRight className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
     </div>
   );
 }

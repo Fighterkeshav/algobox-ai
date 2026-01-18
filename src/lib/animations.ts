@@ -2,9 +2,12 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { animate, stagger } from "animejs";
 
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
+
+// --- GSAP SECTION ---
 
 // Animation presets
 export const animations = {
@@ -36,6 +39,11 @@ export const animations = {
         from: { opacity: 0, rotationY: 90 },
         to: { opacity: 1, rotationY: 0, duration: 0.8, ease: "power2.out" },
     },
+    // "Hell" mode animations (more intense)
+    explodeIn: {
+        from: { opacity: 0, scale: 0, rotation: -45 },
+        to: { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: "elastic.out(1, 0.5)" }
+    }
 };
 
 // Hook for scroll-triggered animations
@@ -60,7 +68,7 @@ export function useScrollAnimation(
             stagger = 0,
             delay = 0,
             trigger,
-            start = "top 80%",
+            start = "top 85%", // Slightly earlier start
             end = "bottom 20%",
             scrub = false,
         } = options;
@@ -79,6 +87,7 @@ export function useScrollAnimation(
                     end,
                     scrub,
                     toggleActions: "play none none reverse",
+                    // markers: true, // Uncomment for debugging
                 },
             });
         }, ref);
@@ -105,7 +114,7 @@ export function useStaggerAnimation(staggerDelay = 0.1, animation: keyof typeof 
                 stagger: staggerDelay,
                 scrollTrigger: {
                     trigger: ref.current,
-                    start: "top 85%",
+                    start: "top 90%",
                     toggleActions: "play none none reverse",
                 },
             });
@@ -117,21 +126,22 @@ export function useStaggerAnimation(staggerDelay = 0.1, animation: keyof typeof 
     return ref;
 }
 
-// Hook for hover animations
-export function useHoverAnimation() {
+// Hook for intense hover animations
+export function useHoverAnimation(intensity = 1) {
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!ref.current) return;
-
         const element = ref.current;
 
         const handleMouseEnter = () => {
             gsap.to(element, {
-                scale: 1.02,
-                y: -5,
+                scale: 1 + (0.05 * intensity),
+                y: -5 * intensity,
+                textShadow: `0 0 ${10 * intensity}px rgba(6, 182, 212, 0.5)`, // Cyan glow
                 duration: 0.3,
                 ease: "power2.out",
+                overwrite: true
             });
         };
 
@@ -139,8 +149,10 @@ export function useHoverAnimation() {
             gsap.to(element, {
                 scale: 1,
                 y: 0,
+                textShadow: "none",
                 duration: 0.3,
                 ease: "power2.out",
+                overwrite: true
             });
         };
 
@@ -151,7 +163,7 @@ export function useHoverAnimation() {
             element.removeEventListener("mouseenter", handleMouseEnter);
             element.removeEventListener("mouseleave", handleMouseLeave);
         };
-    }, []);
+    }, [intensity]);
 
     return ref;
 }
@@ -168,7 +180,7 @@ export function useTextReveal() {
             const text = ref.current!.innerText;
             const words = text.split(" ");
             ref.current!.innerHTML = words
-                .map((word) => `<span class="inline-block overflow-hidden"><span class="inline-block">${word}</span></span>`)
+                .map((word) => `<span class="inline-block overflow-hidden"><span class="inline-block translate-y-full opacity-0 will-change-transform">${word}</span></span>`)
                 .join(" ");
 
             const innerSpans = ref.current!.querySelectorAll("span > span");
@@ -181,10 +193,10 @@ export function useTextReveal() {
                     opacity: 1,
                     duration: 0.8,
                     stagger: 0.05,
-                    ease: "power3.out",
+                    ease: "power4.out",
                     scrollTrigger: {
                         trigger: ref.current,
-                        start: "top 85%",
+                        start: "top 90%",
                         toggleActions: "play none none reverse",
                     },
                 }
@@ -198,22 +210,23 @@ export function useTextReveal() {
 }
 
 // Magnetic button effect
-export function useMagneticEffect(strength = 0.3) {
+export function useMagneticEffect(strength = 0.5) { // Increased default strength
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!ref.current) return;
 
         const element = ref.current;
-        const rect = element.getBoundingClientRect();
 
         const handleMouseMove = (e: MouseEvent) => {
+            const rect = element.getBoundingClientRect();
             const x = e.clientX - rect.left - rect.width / 2;
             const y = e.clientY - rect.top - rect.height / 2;
 
             gsap.to(element, {
                 x: x * strength,
                 y: y * strength,
+                rotation: x * 0.05, // Slight rotation for more feel
                 duration: 0.3,
                 ease: "power2.out",
             });
@@ -223,8 +236,9 @@ export function useMagneticEffect(strength = 0.3) {
             gsap.to(element, {
                 x: 0,
                 y: 0,
-                duration: 0.5,
-                ease: "elastic.out(1, 0.3)",
+                rotation: 0,
+                duration: 0.8,
+                ease: "elastic.out(1.2, 0.4)", // Bouncier return
             });
         };
 
@@ -274,18 +288,20 @@ export function useCountUp(endValue: number, duration = 2) {
         if (!ref.current) return;
 
         const ctx = gsap.context(() => {
-            gsap.fromTo(
+            // Ensure starting from 0 explicitly
+            ref.current!.innerText = "0";
+
+            gsap.to(
                 ref.current,
-                { innerText: 0 },
                 {
                     innerText: endValue,
                     duration,
-                    ease: "power1.out",
+                    ease: "power2.out",
                     snap: { innerText: 1 },
                     scrollTrigger: {
                         trigger: ref.current,
                         start: "top 85%",
-                        toggleActions: "play none none none",
+                        toggleActions: "restart none none none",
                     },
                 }
             );
@@ -293,6 +309,75 @@ export function useCountUp(endValue: number, duration = 2) {
 
         return () => ctx.revert();
     }, [endValue, duration]);
+
+    return ref;
+}
+
+
+// --- ANIME.JS SECTION ---
+
+// Hook for Anime.js timeline animations
+export function useAnimeTimeline(options: any = {}) {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!ref.current) return;
+
+        // Example: Entrance with slight elasticity
+        animate(ref.current.children, {
+            translateY: [20, 0],
+            opacity: [0, 1],
+            delay: stagger(100, { start: 200 }),
+            duration: 800,
+            easing: 'easeOutElastic(1, .8)'
+        });
+
+    }, []);
+
+    return ref;
+}
+
+// Hook for specific "glitch" or intense effect using Anime.js
+export function useGlitchEffect() {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!ref.current) return;
+
+        const element = ref.current;
+
+        const anim = animate(element, {
+            skewX: [
+                { value: 10, duration: 100, easing: 'easeInOutSine' },
+                { value: -10, duration: 100, easing: 'easeInOutSine' },
+                { value: 0, duration: 100, easing: 'easeInOutSine' }
+            ],
+            scale: [
+                { value: 1.05, duration: 100, easing: 'easeInOutSine' },
+                { value: 1, duration: 100, easing: 'easeInOutSine' }
+            ],
+            filter: [
+                { value: 'hue-rotate(90deg)', duration: 100 },
+                { value: 'hue-rotate(0deg)', duration: 100 }
+            ],
+            loop: false,
+            autoplay: false
+        });
+
+        const trigger = () => {
+            if (!anim.began || anim.completed) {
+                anim.restart();
+            }
+        };
+
+        element.addEventListener('mouseenter', trigger);
+        element.addEventListener('click', trigger);
+
+        return () => {
+            element.removeEventListener('mouseenter', trigger);
+            element.removeEventListener('click', trigger);
+        };
+    }, []);
 
     return ref;
 }
