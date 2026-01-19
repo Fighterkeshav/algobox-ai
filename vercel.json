@@ -3,11 +3,23 @@
     "buildCommand": "npm run build",
     "outputDirectory": "dist",
     "framework": "vite",
-    "installCommand": "npm install",
     "rewrites": [
         {
+            "source": "/api/go/(.*)",
+            "destination": "/api/go/$1"
+        },
+        {
+            "source": "/api/inngest",
+            "destination": "/api/inngest"
+        },
+        {
             "source": "/(.*)",
-            "destination": "/"
+            "destination": "/index.html"
         }
-    ]
+    ],
+    "functions": {
+        "api/go/*.go": {
+            "runtime": "go1.x"
+        }
+    }
 }
