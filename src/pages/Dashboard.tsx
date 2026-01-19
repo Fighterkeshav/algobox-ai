@@ -107,19 +107,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div
         ref={headerRef}
-        className="mb-8 flex flex-col-reverse gap-4 md:flex-row md:items-center md:justify-between" // Start opacity 0 for GSAP
+        className="mb-6 sm:mb-8 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <h1 ref={welcomeTextRef} className="text-2xl font-bold md:text-3xl lg:text-4xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent overflow-hidden pb-1">
+          <h1 ref={welcomeTextRef} className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent overflow-hidden pb-1">
             Welcome back! 👋
           </h1>
-          <p className="mt-2 text-muted-foreground">Continue your learning journey</p>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">Continue your learning journey</p>
         </div>
-        <div ref={glitchRef} className="h-32 w-32 md:h-40 md:w-40 cursor-pointer">
+        <div ref={glitchRef} className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 cursor-pointer self-center sm:self-auto">
           <DotLottieReact
             src="https://lottie.host/519b609d-eb4b-4d6e-a5cc-190163f44419/OGhUSxI2BL.lottie"
             loop
@@ -131,17 +131,17 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div
         ref={statsRef}
-        className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="mb-6 sm:mb-8 grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
-          icon={<Target className="h-4 w-4" />}
+          icon={<Target className="h-3 w-3 sm:h-4 sm:w-4" />}
           label="Problems Solved"
           value={completedProblems}
           subtext={`of ${totalProblems} total`}
           color="primary"
         />
         <StatCard
-          icon={<Flame className="h-4 w-4" />}
+          icon={<Flame className="h-3 w-3 sm:h-4 sm:w-4" />}
           label="Total Activity"
           value={streak}
           suffix=" days"
@@ -149,7 +149,7 @@ export default function Dashboard() {
           color="warning"
         />
         <StatCard
-          icon={<Clock className="h-4 w-4" />}
+          icon={<Clock className="h-3 w-3 sm:h-4 sm:w-4" />}
           label="Est. Hours"
           value={completedProblems * 0.5}
           isFloat
@@ -157,39 +157,39 @@ export default function Dashboard() {
           color="success"
         />
         <StatCard
-          icon={<TrendingUp className="h-4 w-4" />}
+          icon={<TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />}
           label="Skill Level"
-          displayValue={skillLevel} // String value, no count up
+          displayValue={skillLevel}
           subtext="Keep it up!"
           color="accent"
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Main Content */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="space-y-4 sm:space-y-6 lg:col-span-2">
           {/* Continue Learning */}
           <div
             ref={recentActivityRef}
-            className="rounded-xl border border-border bg-card p-6"
+            className="rounded-xl border border-border bg-card p-4 sm:p-6"
           >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-semibold text-lg">Recent Activity</h2>
+            <div className="mb-3 sm:mb-4 flex items-center justify-between">
+              <h2 className="font-semibold text-base sm:text-lg">Recent Activity</h2>
               <Link to="/practice">
-                <Button variant="ghost" size="sm" className="text-xs">
+                <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs">
                   View All <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>
               </Link>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {recentProblems.length > 0 ? recentProblems.map((problem: any) => (
                 <RecentProblemItem key={problem.id} problem={problem} />
               )) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">No recent activity.</p>
+                <div className="text-center py-6 sm:py-8 text-muted-foreground">
+                  <p className="text-xs sm:text-sm">No recent activity.</p>
                   <Link to="/practice">
-                    <Button variant="link" size="sm" className="mt-1 text-xs">Start your first problem!</Button>
+                    <Button variant="link" size="sm" className="mt-1 text-[10px] sm:text-xs">Start your first problem!</Button>
                   </Link>
                 </div>
               )}
@@ -197,39 +197,35 @@ export default function Dashboard() {
           </div>
 
           {/* Recommended Topics */}
-          <div
-            // Re-using scroll animation hook logic implicitly via container if needed,
-            // or just let it flow. Let's add another ref for this if we want distinct animation
-            className="rounded-xl border border-border bg-card p-6"
-          >
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
             <TopicProgressSection categoryStats={categoryStats} />
           </div>
         </div>
 
         {/* Sidebar */}
-        <div ref={sidebarRef} className="space-y-6">
+        <div ref={sidebarRef} className="space-y-4 sm:space-y-6">
           {/* Quick Practice */}
           <QuickPracticeCard />
 
           {/* Milestones */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="mb-4 font-semibold text-lg">Next Milestone</h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
+            <h3 className="mb-3 sm:mb-4 font-semibold text-base sm:text-lg">Next Milestone</h3>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="flex items-center justify-between text-xs sm:text-sm">
                   <span className="font-medium">Solve 10 Problems</span>
                 </div>
-                <Progress value={Math.min((completedProblems / 10) * 100, 100)} className="h-2" />
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                <Progress value={Math.min((completedProblems / 10) * 100, 100)} className="h-1.5 sm:h-2" />
+                <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                   Problem Solver Badge
                 </p>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="flex items-center justify-between text-xs sm:text-sm">
                   <span className="font-medium">Solve 50 Problems</span>
                 </div>
-                <Progress value={Math.min((completedProblems / 50) * 100, 100)} className="h-2" />
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                <Progress value={Math.min((completedProblems / 50) * 100, 100)} className="h-1.5 sm:h-2" />
+                <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                   Master Coder Badge
                 </p>
               </div>
@@ -244,36 +240,36 @@ export default function Dashboard() {
 // --- Sub-components with internal animations ---
 
 function RecentProblemItem({ problem }: { problem: any }) {
-  const ref = useHoverAnimation(1.02); // Subtle hover scale
+  const ref = useHoverAnimation(1.02);
   return (
     <div
       ref={ref}
-      className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/40 cursor-default"
+      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 rounded-lg border border-border bg-background p-3 sm:p-4 transition-colors hover:border-primary/40 cursor-default"
     >
-      <div className="flex items-center gap-4">
-        <div className={`rounded-lg p-2 ${problem.status === "completed"
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className={`rounded-lg p-1.5 sm:p-2 ${problem.status === "completed"
           ? "bg-success/10 text-success"
           : "bg-warning/10 text-warning"
           }`}>
           {problem.status === "completed" ? (
-            <CheckCircle2 className="h-5 w-5" />
+            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
           ) : (
-            <Play className="h-5 w-5" />
+            <Play className="h-4 w-4 sm:h-5 sm:w-5" />
           )}
         </div>
-        <div>
-          <h3 className="text-sm font-medium">{problem.title}</h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant={problem.difficulty as "beginner" | "intermediate" | "advanced"} className="text-[10px] px-2 py-0.5">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xs sm:text-sm font-medium truncate">{problem.title}</h3>
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
+            <Badge variant={problem.difficulty as "beginner" | "intermediate" | "advanced"} className="text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5">
               {problem.difficulty}
             </Badge>
             <span>•</span>
-            <span>{problem.time}</span>
+            <span className="truncate">{problem.time}</span>
           </div>
         </div>
       </div>
       <Link to={`/practice?id=${problem.id}`}>
-        <Button variant="ghost" size="sm" className="text-xs">
+        <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs w-full sm:w-auto">
           {problem.status === "completed" ? "Review" : "Continue"}
         </Button>
       </Link>
@@ -302,25 +298,23 @@ function StatCard({ icon, label, value, displayValue, subtext, color, suffix = "
   };
 
   const countRef = useRef<HTMLDivElement>(null);
-
-  // Use CountUp hook if value is a number
   useCountUp(typeof value === 'number' ? value : 0, 2);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30">
-      <div className={`mb-2 inline-flex rounded-md p-1.5 ${colorClasses[color]}`}>
+    <div className="rounded-lg border border-border bg-card p-3 sm:p-4 transition-colors hover:border-primary/30">
+      <div className={`mb-1.5 sm:mb-2 inline-flex rounded-md p-1 sm:p-1.5 ${colorClasses[color]}`}>
         {icon}
       </div>
-      <div className="text-xl font-bold flex items-baseline">
+      <div className="text-lg sm:text-xl font-bold flex items-baseline">
         {typeof value === 'number' ? (
           <span ref={countRef}>{isFloat ? value.toFixed(1) : value}</span>
         ) : (
           <span>{displayValue || value}</span>
         )}
-        {suffix && <span className="ml-1 text-sm font-normal text-muted-foreground">{suffix}</span>}
+        {suffix && <span className="ml-1 text-[10px] sm:text-sm font-normal text-muted-foreground">{suffix}</span>}
       </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-[10px] text-muted-foreground">{subtext}</div>
+      <div className="text-[10px] sm:text-xs text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-[8px] sm:text-[10px] text-muted-foreground hidden sm:block">{subtext}</div>
     </div>
   );
 }
@@ -329,29 +323,29 @@ function TopicProgressSection({ categoryStats }: { categoryStats: any[] }) {
   const ref = useStaggerAnimation(0.1, "fadeInUp");
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 sm:mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold text-lg">Topic Progress</h2>
+          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          <h2 className="font-semibold text-base sm:text-lg">Topic Progress</h2>
         </div>
         <Link to="/roadmap">
-          <Button variant="ghost" size="sm" className="text-xs">
+          <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs">
             Full Roadmap <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </Link>
       </div>
-      <div ref={ref} className="space-y-4">
+      <div ref={ref} className="space-y-3 sm:space-y-4">
         {categoryStats.map((topic) => (
-          <div key={topic.id} className="space-y-2"> {/* Start invisible for stagger */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">{topic.name}</span>
-              <span className="text-xs text-muted-foreground">
+          <div key={topic.id} className="space-y-1.5 sm:space-y-2">
+            <div className="flex items-center justify-between text-xs sm:text-sm">
+              <span className="font-medium truncate mr-2">{topic.name}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
                 {topic.solved} / {topic.problems}
               </span>
             </div>
-            <div className="flex items-center gap-3">
-              <Progress value={topic.progress} className="flex-1 h-2" />
-              <span className="text-xs font-medium text-primary w-8">{topic.progress}%</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Progress value={topic.progress} className="flex-1 h-1.5 sm:h-2" />
+              <span className="text-[10px] sm:text-xs font-medium text-primary w-6 sm:w-8">{topic.progress}%</span>
             </div>
           </div>
         ))}
@@ -364,13 +358,13 @@ function QuickPracticeCard() {
   const glitchRef = useGlitchEffect();
   return (
     <div
-      ref={glitchRef}  // Apply glitch effect to the whole card interaction
-      className="rounded-xl border border-border bg-card p-6 relative overflow-hidden"
+      ref={glitchRef}
+      className="rounded-xl border border-border bg-card p-4 sm:p-6 relative overflow-hidden"
     >
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <Code2 className="h-8 w-8 text-primary" />
-          <div className="h-20 w-20 -mt-2 -mr-2 opacity-90">
+        <div className="flex items-start justify-between mb-3 sm:mb-4">
+          <Code2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+          <div className="h-16 w-16 sm:h-20 sm:w-20 -mt-2 -mr-2 opacity-90">
             <DotLottieReact
               src="https://lottie.host/04bf57ab-2b8c-4088-8041-b7c14fea6aea/8sRGvO0CxH.lottie"
               loop
@@ -378,20 +372,19 @@ function QuickPracticeCard() {
             />
           </div>
         </div>
-        <h3 className="mb-2 font-semibold text-lg">Quick Practice</h3>
-        <p className="mb-6 text-sm text-muted-foreground">
+        <h3 className="mb-1.5 sm:mb-2 font-semibold text-base sm:text-lg">Quick Practice</h3>
+        <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-muted-foreground">
           AI will select the best problem for you based on your progress.
         </p>
         <Link to="/practice">
-          <Button size="sm" className="w-full font-semibold">
+          <Button size="sm" className="w-full font-semibold text-xs sm:text-sm">
             Start Now
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
         </Link>
       </div>
 
-      {/* Decorative background gradient */}
-      <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full blur-3xl -z-0" />
+      <div className="absolute top-0 right-0 h-24 w-24 sm:h-32 sm:w-32 bg-primary/5 rounded-full blur-3xl -z-0" />
     </div>
   );
 }

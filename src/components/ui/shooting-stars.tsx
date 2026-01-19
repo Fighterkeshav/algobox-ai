@@ -92,7 +92,7 @@ export const ShootingStars = ({
                         dur={`${star.distance / star.speed}s`}
                         begin="0s"
                         fill="freeze"
-                        onend={() => setStar(null)}
+                        onEnded={() => setStar(null)}
                     />
                 </rect>
             )}
