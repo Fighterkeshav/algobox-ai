@@ -85,17 +85,15 @@ export default function Landing() {
       <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <Logo size="md" />
-          <div className="flex items-center gap-3">
-            <Link to="/dashboard">
-              {/* <Button variant="ghost" size="sm">Dashboard</Button> */}
-            </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm">Login</Button>
+              <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3">Login</Button>
             </Link>
             <Link to="/signup">
-              <Button size="sm" className="group">
-                Get Started
-                <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Button size="sm" className="group text-xs sm:text-sm px-2 sm:px-4">
+                <span className="hidden sm:inline">Get Started</span>
+                <span className="sm:hidden">Start</span>
+                <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </div>
@@ -103,38 +101,43 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-28 pb-16">
-        <div className="container relative mx-auto px-4">
+      <section className="relative pt-24 sm:pt-28 pb-12 sm:pb-16 px-4">
+        <div className="container relative mx-auto">
           <div
             ref={heroRef}
             className="mx-auto max-w-3xl text-center"
           >
-            <Badge variant="outline" className="mb-5 text-xs font-medium">
-              <Zap className="mr-1.5 h-3 w-3" />
+            <Badge variant="outline" className="mb-4 sm:mb-5 text-[10px] sm:text-xs font-medium">
+              <Zap className="mr-1 sm:mr-1.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
               AI-Powered Learning Platform
             </Badge>
 
-            <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight md:text-6xl">
+            <h1 className="mb-4 sm:mb-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
               <span ref={titleRef} className="block">Master Algorithms with</span>
               <span className="block text-primary mt-1 bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
                 AI-Guided Precision
               </span>
             </h1>
 
-            <p className="mx-auto mb-8 max-w-xl text-base text-muted-foreground md:text-lg">
+            <p className="mx-auto mb-6 sm:mb-8 max-w-xl text-sm sm:text-base md:text-lg text-muted-foreground px-2">
               Transform into an industry-ready problem solver through
               adaptive roadmaps, real-time AI debugging, and personalized practice.
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+<<<<<<< HEAD
               <Link to={user ? "/dashboard" : "/signup"}>
                 <Button size="lg" className="group animate-pulse [animation-delay:2s] hover:animate-none">
+=======
+              <Link to="/signup" className="w-full sm:w-auto">
+                <Button size="lg" className="group animate-pulse hover:animate-none w-full sm:w-auto">
+>>>>>>> b012c708a4a6517bdffa3492caf383f9f4b6ebb2
                   Start Your Journey
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <Link to="/roadmap">
-                <Button variant="outline" size="lg">
+              <Link to="/roadmap" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Explore Roadmaps
                 </Button>
               </Link>
@@ -143,14 +146,14 @@ export default function Landing() {
             {/* Stats */}
             <div
               ref={statsRef}
-              className="mt-12 flex items-center justify-center gap-8 md:gap-12"
+              className="mt-10 sm:mt-12 flex items-center justify-center gap-6 sm:gap-8 md:gap-12"
             >
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
-                  <div className="text-2xl font-semibold text-primary md:text-3xl">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-semibold text-primary">
                     {stat.value}
                   </div>
-                  <div className="text-xs text-muted-foreground md:text-sm">{stat.label}</div>
+                  <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -159,18 +162,18 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 relative">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 text-center">
-            <h2 className="mb-3 text-2xl font-bold md:text-3xl">
+      <section className="py-12 sm:py-16 relative px-4">
+        <div className="container mx-auto">
+          <div className="mb-8 sm:mb-10 text-center">
+            <h2 className="mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl font-bold">
               Everything You Need to Level Up
             </h2>
-            <p className="mx-auto max-w-xl text-sm text-muted-foreground md:text-base">
+            <p className="mx-auto max-w-xl text-xs sm:text-sm md:text-base text-muted-foreground px-2">
               A complete learning ecosystem designed to accelerate your coding journey.
             </p>
           </div>
 
-          <div ref={featuresRef} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div ref={featuresRef} className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
               <FeatureCard key={feature.title} feature={feature} />
             ))}
@@ -179,13 +182,13 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 relative">
-        <div className="container mx-auto px-4">
-          <div ref={ctaRef} className="relative overflow-hidden rounded-xl border border-border bg-card p-8 md:p-10 text-center">
-            <h2 className="mb-3 text-2xl font-bold md:text-3xl">
+      <section className="py-12 sm:py-16 relative px-4">
+        <div className="container mx-auto">
+          <div ref={ctaRef} className="relative overflow-hidden rounded-xl border border-border bg-card p-6 sm:p-8 md:p-10 text-center">
+            <h2 className="mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl font-bold">
               Ready to Transform Your Coding Skills?
             </h2>
-            <p className="mx-auto mb-6 max-w-lg text-sm text-muted-foreground md:text-base">
+            <p className="mx-auto mb-5 sm:mb-6 max-w-lg text-xs sm:text-sm md:text-base text-muted-foreground">
               Join developers who are using Algobox to master algorithms and land their dream jobs.
             </p>
             <Link to="/signup">
@@ -199,10 +202,10 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-6">
-        <div className="container mx-auto flex items-center justify-between px-4">
+      <footer className="border-t border-border py-4 sm:py-6 px-4">
+        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <Logo size="sm" />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center sm:text-left">
             © 2024 Algobox. Built for developers, by developers.
           </p>
         </div>
@@ -212,18 +215,18 @@ export default function Landing() {
 }
 
 function FeatureCard({ feature }: { feature: any }) {
-  const ref = useHoverAnimation(1.05); // Add hover effect to features
+  const ref = useHoverAnimation(1.05);
   return (
     <div
       ref={ref}
-      className="group relative rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/40" // Start invisible for stagger
+      className="group relative rounded-lg border border-border bg-card p-4 sm:p-5 transition-colors hover:border-primary/40"
     >
-      <div className="mb-3 inline-flex rounded-md bg-primary/10 p-2.5 text-primary">
+      <div className="mb-2 sm:mb-3 inline-flex rounded-md bg-primary/10 p-2 sm:p-2.5 text-primary">
         {feature.icon}
       </div>
-      <h3 className="mb-1.5 font-semibold">{feature.title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-      <ChevronRight className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
+      <h3 className="mb-1 sm:mb-1.5 text-sm sm:text-base font-semibold">{feature.title}</h3>
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+      <ChevronRight className="absolute right-3 sm:right-4 top-1/2 h-3 w-3 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
     </div>
   );
 }

@@ -20,5 +20,8 @@ type Events = {
 
 export const inngest = new Inngest({
     id: "algobox-ai",
+<<<<<<< HEAD
     schemas: new EventSchemas().fromRecord<Events>(),
+=======
+>>>>>>> b012c708a4a6517bdffa3492caf383f9f4b6ebb2
 });
