@@ -4,6 +4,7 @@ import { Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 import { databases } from "@/lib/sql-lab/databases/sampleData";
 import { parseSQL, generateExecutionSteps, ExecutionStep } from "@/lib/sql-lab/engine/sqlParser";
@@ -54,6 +55,26 @@ export function SqlLabPlayground() {
             setIsPlaying(false);
             addToHistory(query);
             toast.success(`Query parsed: ${steps.length} execution steps`);
+
+            // Emit Inngest Event for SQL practice tracking
+            supabase.auth.getUser().then(({ data: { user } }) => {
+                if (user) {
+                    fetch('/api/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: "sql.practice.submitted",
+                            data: {
+                                userId: user.id,
+                                query: query,
+                                challengeId: "playground",
+                                executionTimeMs: 100,
+                                success: true
+                            }
+                        })
+                    }).catch(console.error);
+                }
+            });
         } catch (e: any) {
             setError(e.message);
             toast.error(`Parse error: ${e.message}`);
@@ -64,10 +85,6 @@ export function SqlLabPlayground() {
 
     const handleExport = () => {
         if (executionSteps.length === 0) return;
-        // In this simplified engine, finding the "result" step is tricky as it's execution steps.
-        // But usually the last step's result or intermediate result is what we want.
-        // Let's assume the executionSteps contain the data.
-        // For now, exporting the execution plan/steps as JSON.
         const blob = new Blob([JSON.stringify(executionSteps, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

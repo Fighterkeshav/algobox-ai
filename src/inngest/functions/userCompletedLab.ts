@@ -1,4 +1,4 @@
-import { inngest } from "../../lib/inngest/client.js";
+import { inngest } from "../../lib/inngest/client.ts";
 
 export const userCompletedLab = inngest.createFunction(
     { id: "user-completed-lab" },

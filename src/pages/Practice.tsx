@@ -154,7 +154,9 @@ export default function Practice() {
                 data: {
                   userId: user.id,
                   labId: selectedProblem.id,
-                  score: 100
+                  score: 100,
+                  timeSpentSeconds: 0, // TODO: Track actual time
+                  labType: "algo"
                 }
               })
             }).catch(console.error);

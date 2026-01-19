@@ -1,4 +1,4 @@
-import { inngest } from "../src/lib/inngest/client";
+import { inngest } from "./inngest_core/client.js";
 
 export const config = {
     runtime: 'edge',

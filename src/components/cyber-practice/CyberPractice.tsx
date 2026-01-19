@@ -61,14 +61,17 @@ export function CyberPractice({ labId }: CyberPracticeProps) {
         if (allPassed && user) {
             setIsSubmitting(true);
             try {
-                const response = await fetch('/api/go/cyber', {
+                const response = await fetch('/api/events', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        userId: user.id,
-                        labId: currentChallenge.id,
-                        submissionId: `${currentChallenge.id}-${Date.now()}`,
-                        score: 100 // Full points for passing
+                        name: "cyber.practice.submitted",
+                        data: {
+                            userId: user.id,
+                            submissionContent: code,
+                            challengeId: currentChallenge.id,
+                            timestamp: Date.now()
+                        }
                     })
                 });
 
