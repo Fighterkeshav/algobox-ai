@@ -230,31 +230,32 @@ export default function Practice() {
     return (
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="border-b border-border px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-lg font-semibold">Problem List</h1>
-            <span className="text-sm text-muted-foreground">0/{PROBLEMS.length} Solved</span>
+        <div className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <h1 className="text-base sm:text-lg font-semibold">Problem List</h1>
+            <span className="text-xs sm:text-sm text-muted-foreground">{getSolvedCount()}/{PROBLEMS.length} Solved</span>
           </div>
         </div>
 
         {/* Search & Filters */}
-        <div className="px-6 py-3 border-b border-border flex items-center gap-3">
+        <div className="px-4 sm:px-6 py-2 sm:py-3 border-b border-border flex items-center gap-2 sm:gap-3">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search questions"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 bg-muted/30"
+              className="pl-9 h-8 sm:h-9 text-sm bg-muted/30"
             />
           </div>
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
-            <Filter className="h-4 w-4 mr-1" /> Filter
+          <Button variant="ghost" size="sm" className="text-muted-foreground text-xs sm:text-sm px-2 sm:px-3">
+            <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> 
+            <span className="hidden sm:inline">Filter</span>
           </Button>
         </div>
 
         {/* Problem List */}
-        <ScrollArea className="h-[calc(100vh-120px)]">
+        <ScrollArea className="h-[calc(100vh-100px)] sm:h-[calc(100vh-120px)]">
           <div className="divide-y divide-border">
             {filteredProblems.map((problem, idx) => {
               const problemProgress = progress[problem.id];
@@ -266,20 +267,20 @@ export default function Practice() {
                 <div
                   key={problem.id}
                   onClick={() => openProblem(problem)}
-                  className="px-6 py-3 flex items-center gap-4 hover:bg-muted/30 cursor-pointer transition-colors"
+                  className="px-4 sm:px-6 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4 hover:bg-muted/30 cursor-pointer transition-colors"
                 >
-                  <div className="w-5 text-center">
+                  <div className="w-4 sm:w-5 text-center flex-shrink-0">
                     {isSolved ? (
-                      <Check className="h-4 w-4 text-emerald-500" />
+                      <Check className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-500" />
                     ) : isAttempted ? (
-                      <div className="h-4 w-4 rounded-full border-2 border-amber-500" />
+                      <div className="h-3 w-3 sm:h-4 sm:w-4 rounded-full border-2 border-amber-500" />
                     ) : (
-                      <div className="h-4 w-4 rounded-full border border-muted-foreground/30" />
+                      <div className="h-3 w-3 sm:h-4 sm:w-4 rounded-full border border-muted-foreground/30" />
                     )}
                   </div>
-                  <span className="flex-1 text-sm">{idx + 1}. {problem.title}</span>
-                  {isFav && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
-                  <span className={cn("text-xs font-medium", DIFFICULTY_CONFIG[problem.difficulty].color)}>
+                  <span className="flex-1 text-xs sm:text-sm truncate">{idx + 1}. {problem.title}</span>
+                  {isFav && <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 fill-amber-500 flex-shrink-0" />}
+                  <span className={cn("text-[10px] sm:text-xs font-medium flex-shrink-0", DIFFICULTY_CONFIG[problem.difficulty].color)}>
                     {DIFFICULTY_CONFIG[problem.difficulty].label}
                   </span>
                 </div>
@@ -295,21 +296,23 @@ export default function Practice() {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Top Bar */}
-      <div className="h-11 border-b border-border flex items-center px-4 gap-3 shrink-0">
-        <button onClick={goBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
-          <span>Problem List</span>
+      <div className="h-10 sm:h-11 border-b border-border flex items-center px-2 sm:px-4 gap-1 sm:gap-3 shrink-0">
+        <button onClick={goBack} className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline">Problem List</span>
         </button>
         <div className="flex-1" />
-        <Button variant="outline" size="sm" onClick={() => handleRun(true)} disabled={isRunning}>
-          <Eye className="h-4 w-4 mr-1" /> Visualize
+        <Button variant="outline" size="sm" onClick={() => handleRun(true)} disabled={isRunning} className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3">
+          <Eye className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" /> 
+          <span className="hidden sm:inline">Visualize</span>
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => handleRun(false)} disabled={isRunning}>
-          <Play className="h-4 w-4 mr-1" /> Run
+        <Button variant="ghost" size="sm" onClick={() => handleRun(false)} disabled={isRunning} className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3">
+          <Play className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" /> 
+          <span className="hidden sm:inline">Run</span>
         </Button>
-        <Button size="sm" onClick={() => handleRun(false)} disabled={isRunning} className="bg-emerald-600 hover:bg-emerald-700">
-          {isRunning ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
-          Submit
+        <Button size="sm" onClick={() => handleRun(false)} disabled={isRunning} className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-700">
+          {isRunning ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin sm:mr-1" /> : <Check className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />}
+          <span className="hidden sm:inline">Submit</span>
         </Button>
       </div>
 

@@ -45,28 +45,29 @@ export default function Signup() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
-            <div className="shadow-input mx-auto w-full max-w-md rounded-2xl bg-card border border-border p-8">
-                <h2 className="text-2xl font-bold text-foreground">
+            <div className="shadow-input mx-auto w-full max-w-md rounded-2xl bg-card border border-border p-6 sm:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
                     Create Account
                 </h2>
-                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                <p className="mt-1.5 sm:mt-2 max-w-sm text-xs sm:text-sm text-muted-foreground">
                     Start your coding journey with Algobox today
                 </p>
 
-                <form className="my-8" onSubmit={handleSubmit}>
-                    <LabelInputContainer className="mb-4">
-                        <Label htmlFor="username">Username</Label>
+                <form className="my-6 sm:my-8" onSubmit={handleSubmit}>
+                    <LabelInputContainer className="mb-3 sm:mb-4">
+                        <Label htmlFor="username" className="text-xs sm:text-sm">Username</Label>
                         <Input
                             id="username"
                             placeholder="johndoe"
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
+                            className="h-9 sm:h-10 text-sm"
                         />
                     </LabelInputContainer>
 
-                    <LabelInputContainer className="mb-4">
-                        <Label htmlFor="email">Email Address</Label>
+                    <LabelInputContainer className="mb-3 sm:mb-4">
+                        <Label htmlFor="email" className="text-xs sm:text-sm">Email Address</Label>
                         <Input
                             id="email"
                             placeholder="you@example.com"
@@ -74,11 +75,12 @@ export default function Signup() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
+                            className="h-9 sm:h-10 text-sm"
                         />
                     </LabelInputContainer>
 
-                    <LabelInputContainer className="mb-8">
-                        <Label htmlFor="password">Password</Label>
+                    <LabelInputContainer className="mb-6 sm:mb-8">
+                        <Label htmlFor="password" className="text-xs sm:text-sm">Password</Label>
                         <Input
                             id="password"
                             placeholder="••••••••"
@@ -87,12 +89,13 @@ export default function Signup() {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             minLength={6}
+                            className="h-9 sm:h-10 text-sm"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">At least 6 characters</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">At least 6 characters</p>
                     </LabelInputContainer>
 
                     <button
-                        className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-primary to-primary/80 font-medium text-primary-foreground shadow-[0px_1px_0px_0px_rgba(255,255,255,0.1)_inset,0px_-1px_0px_0px_rgba(255,255,255,0.1)_inset] disabled:opacity-50"
+                        className="group/btn relative block h-9 sm:h-10 w-full rounded-md bg-gradient-to-br from-primary to-primary/80 font-medium text-sm sm:text-base text-primary-foreground shadow-[0px_1px_0px_0px_rgba(255,255,255,0.1)_inset,0px_-1px_0px_0px_rgba(255,255,255,0.1)_inset] disabled:opacity-50"
                         type="submit"
                         disabled={loading}
                     >
@@ -104,22 +107,22 @@ export default function Signup() {
                         <BottomGradient />
                     </button>
 
-                    <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+                    <div className="my-6 sm:my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-border to-transparent" />
 
-                    <div className="flex flex-col space-y-4">
+                    <div className="flex flex-col space-y-3 sm:space-y-4">
                         <button
-                            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-secondary px-4 font-medium text-secondary-foreground"
+                            className="group/btn shadow-input relative flex h-9 sm:h-10 w-full items-center justify-start space-x-2 rounded-md bg-secondary px-4 font-medium text-secondary-foreground"
                             type="button"
                             onClick={handleGoogleSignUp}
                         >
                             <IconBrandGoogle className="h-4 w-4" />
-                            <span className="text-sm">Continue with Google</span>
+                            <span className="text-xs sm:text-sm">Continue with Google</span>
                             <BottomGradient />
                         </button>
                     </div>
                 </form>
 
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="text-center text-xs sm:text-sm text-muted-foreground">
                     Already have an account?{" "}
                     <Link to="/login" className="text-primary hover:underline font-medium">
                         Sign in
