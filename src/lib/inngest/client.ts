@@ -1,4 +1,4 @@
-import { Inngest } from "inngest";
+import { Inngest, EventSchemas } from "inngest";
 
 // valid event keys:
 type Events = {
@@ -20,7 +20,5 @@ type Events = {
 
 export const inngest = new Inngest({
     id: "algobox-ai",
-    schemas: {
-        events: {} as Events,
-    },
+    schemas: new EventSchemas().fromRecord<Events>(),
 });

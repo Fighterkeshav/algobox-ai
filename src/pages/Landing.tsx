@@ -21,6 +21,7 @@ import {
   useTextReveal,
   useHoverAnimation
 } from "@/lib/animations";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   {
@@ -67,6 +68,7 @@ const stats = [
 ];
 
 export default function Landing() {
+  const { user } = useAuth();
   const heroRef = useScrollAnimation({ animation: "fadeInUp", delay: 0.1 });
   const titleRef = useTextReveal(); // For "Master Algorithms..."
   const featuresRef = useStaggerAnimation(0.1, "fadeInUp");
@@ -125,8 +127,8 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link to="/signup">
-                <Button size="lg" className="group animate-pulse hover:animate-none">
+              <Link to={user ? "/dashboard" : "/signup"}>
+                <Button size="lg" className="group animate-pulse [animation-delay:2s] hover:animate-none">
                   Start Your Journey
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
