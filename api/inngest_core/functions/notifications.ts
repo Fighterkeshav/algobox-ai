@@ -3,11 +3,31 @@ import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize clients
-const resend = new Resend(process.env.VITE_RESEND_API_KEY);
-const supabase = createClient(
-    process.env.VITE_SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
-);
+// Helper to get Resend client safely
+const getResend = () => {
+    const key = process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
+    if (!key) {
+        console.warn("Resend API key missing");
+        return null;
+    }
+    return new Resend(key);
+};
+
+const resend = getResend();
+
+// Helper to get Supabase client safely
+const getSupabase = () => {
+    const url = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+        console.warn("Supabase credentials missing in environment");
+        return null;
+    }
+    return createClient(url, key);
+};
+
+const supabase = getSupabase();
 
 // Centralized Notification Handler
 export const emailNotification = inngest.createFunction(
@@ -19,6 +39,9 @@ export const emailNotification = inngest.createFunction(
         // Step 1: Resolve 'to' if it's a User ID (UUID)
         if (to && !to.includes('@')) {
             const resolvedEmail = await step.run("resolve-user-email", async () => {
+                if (!supabase) {
+                    throw new Error("Supabase client not initialized - check env vars");
+                }
                 const { data } = await supabase.auth.admin.getUserById(to);
                 return data?.user?.email;
             });
@@ -40,7 +63,7 @@ export const emailNotification = inngest.createFunction(
 
         const result = await step.run("send-email-via-resend", async () => {
             // Check if API key is configured
-            if (!process.env.VITE_RESEND_API_KEY) {
+            if (!resend) {
                 console.log(`[Mock Email] To: ${to}, Subject: ${subject}`);
                 return { messageId: `mock_${Date.now()}` };
             }

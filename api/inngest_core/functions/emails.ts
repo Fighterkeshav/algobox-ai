@@ -3,11 +3,23 @@ import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize clients
-const resend = new Resend(process.env.VITE_RESEND_API_KEY);
-const supabase = createClient(
-    process.env.VITE_SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
-);
+const getResend = () => {
+    const key = process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
+    if (!key) return null;
+    return new Resend(key);
+};
+const resend = getResend();
+
+// Helper to get Supabase client safely
+const getSupabase = () => {
+    const url = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !key) return null;
+    return createClient(url, key);
+};
+
+const supabase = getSupabase();
 
 // ============================================
 // 1. WELCOME EMAIL - Triggered on user signup
@@ -19,14 +31,11 @@ export const welcomeEmail = inngest.createFunction(
         const { email, name, userId } = event.data;
 
         await step.run("send-welcome-email", async () => {
-            const hasKey = !!process.env.VITE_RESEND_API_KEY;
-            console.log(`[Welcome Email Check] Has API Key: ${hasKey}, keys: ${Object.keys(process.env).filter(k => k.includes('RESEND'))}`);
-
-            if (!process.env.VITE_RESEND_API_KEY) {
-                console.log(`[Mock Welcome Email - Missing Key] To: ${email}`);
-                return { messageId: `mock_welcome_${Date.now()}` };
+            // Send real email via Resend
+            if (!resend) {
+                console.log(`[Mock Email] To: ${email}, Subject: 🚀 Welcome to Algobox - Your Algorithm Journey Starts Now!`);
+                return { messageId: `mock_${Date.now()}` };
             }
-
             const { data, error } = await resend.emails.send({
                 from: 'Algobox <onboarding@resend.dev>',
                 to: email,
@@ -113,6 +122,7 @@ export const dailyStreakReminder = inngest.createFunction(
             const today = new Date().toISOString().split('T')[0];
 
             // Get all users with their last activity
+            if (!supabase) throw new Error("Supabase client missing");
             const { data: profiles, error } = await supabase
                 .from('profiles')
                 .select('id, username, full_name, score')
@@ -159,6 +169,7 @@ export const sendStreakReminderEmail = inngest.createFunction(
 
         // Get user's email from auth
         const userEmail = await step.run("get-user-email", async () => {
+            if (!supabase) throw new Error("Supabase client missing");
             const { data } = await supabase.auth.admin.getUserById(userId);
             return data?.user?.email;
         });
@@ -166,7 +177,7 @@ export const sendStreakReminderEmail = inngest.createFunction(
         if (!userEmail) return { skipped: true, reason: "No email found" };
 
         await step.run("send-streak-email", async () => {
-            if (!process.env.VITE_RESEND_API_KEY) {
+            if (!resend) {
                 console.log(`[Mock Streak Reminder] To: ${userEmail}`);
                 return;
             }
