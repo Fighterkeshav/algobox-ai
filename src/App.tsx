@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import Visualise from "./pages/Visualise";
 import CyberLab from "./pages/CyberLab";
 import BattleMode from "./pages/BattleMode";
+import Leaderboard from "./pages/Leaderboard";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { AnalyticsListener } from "./components/AnalyticsListener";
 import { useEffect } from "react";
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/notes" element={<Notes />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/battle" element={<BattleMode />} />
             </Route>
             <Route path="*" element={<NotFound />} />

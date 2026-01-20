@@ -21,6 +21,7 @@ import {
   Shield,
   Menu,
   Swords,
+  Trophy,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { label: "Roadmap", href: "/roadmap", icon: <Map className="h-5 w-5 shrink-0" /> },
   { label: "Practice", href: "/practice", icon: <Code2 className="h-5 w-5 shrink-0" /> },
   { label: "Battle Arena", href: "/battle", icon: <Swords className="h-5 w-5 shrink-0" /> },
+  { label: "Leaderboard", href: "/leaderboard", icon: <Trophy className="h-5 w-5 shrink-0" /> },
   { label: "Visualize", href: "/visualise", icon: <PlayCircle className="h-5 w-5 shrink-0" /> },
   { label: "Cyber Lab", href: "/cyber-lab", icon: <Shield className="h-5 w-5 shrink-0" /> },
   { label: "Analytics", href: "/analytics", icon: <BarChart3 className="h-5 w-5 shrink-0" /> },

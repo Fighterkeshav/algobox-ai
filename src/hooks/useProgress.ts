@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ProblemProgress {
     problem_id: string;
@@ -14,7 +15,7 @@ export function useProgress() {
     const [progress, setProgress] = useState<Record<string, ProblemProgress>>({});
     const [loading, setLoading] = useState(true);
 
-    // Fetch user's progress from localStorage
+    // Fetch user's progress from Supabase and sync with localStorage
     useEffect(() => {
         if (!user) {
             setProgress({});
@@ -22,24 +23,84 @@ export function useProgress() {
             return;
         }
 
-        const stored = localStorage.getItem(`progress_${user.id}`);
-        if (stored) {
+        const fetchAndSyncProgress = async () => {
             try {
-                const items: ProblemProgress[] = JSON.parse(stored);
-                const progressMap: Record<string, ProblemProgress> = {};
-                items.forEach(item => {
-                    progressMap[item.problem_id] = item;
+                // 1. Get local storage data
+                const localStored = localStorage.getItem(`progress_${user.id}`);
+                const localItems: ProblemProgress[] = localStored ? JSON.parse(localStored) : [];
+                const localMap: Record<string, ProblemProgress> = {};
+                localItems.forEach(item => localMap[item.problem_id] = item);
+
+                // 2. Get Supabase data
+                const { data: dbData, error } = await supabase
+                    .from('problem_progress')
+                    .select('*');
+
+                if (error) {
+                    console.error("Error fetching progress from DB:", error);
+                    // Fallback to local
+                    setProgress(localMap);
+                    setLoading(false);
+                    return;
+                }
+
+                const dbMap: Record<string, ProblemProgress> = {};
+                if (dbData) {
+                    dbData.forEach((item: any) => {
+                        dbMap[item.problem_id] = {
+                            problem_id: item.problem_id,
+                            status: item.status as any,
+                            code: item.code,
+                            language: item.language,
+                            solved_at: item.solved_at
+                        };
+                    });
+                }
+
+                // 3. Sync: If local has data but DB doesn't, push local to DB (Migration for existing users)
+                const updatesToPush: ProblemProgress[] = [];
+                Object.values(localMap).forEach(localItem => {
+                    const dbItem = dbMap[localItem.problem_id];
+                    // If problem exists locally but not in DB, OR local is 'solved' but DB is not
+                    if (!dbItem || (localItem.status === 'solved' && dbItem.status !== 'solved')) {
+                        updatesToPush.push(localItem);
+                        // Update our 'current' view to match local (since it's newer)
+                        dbMap[localItem.problem_id] = localItem;
+                    }
                 });
-                setProgress(progressMap);
+
+                if (updatesToPush.length > 0) {
+                    console.log("Syncing local progress to Supabase...", updatesToPush);
+                    for (const item of updatesToPush) {
+                        await supabase.from('problem_progress').upsert({
+                            user_id: user.id,
+                            problem_id: item.problem_id,
+                            status: item.status,
+                            code: item.code,
+                            language: item.language,
+                            solved_at: item.solved_at
+                        });
+                    }
+                }
+
+                // 4. Set state to the merged/DB version (DB is now source of truth + synced local)
+                setProgress(dbMap);
+
+                // 5. Update localStorage to match DB (consistency)
+                localStorage.setItem(`progress_${user.id}`, JSON.stringify(Object.values(dbMap)));
+
             } catch (err) {
-                console.error("Error parsing progress:", err);
+                console.error("Sync error:", err);
+            } finally {
+                setLoading(false);
             }
-        }
-        setLoading(false);
+        };
+
+        fetchAndSyncProgress();
     }, [user]);
 
-    // Update progress for a problem
-    const updateProgress = (
+    // Update progress for a problem (Local + DB)
+    const updateProgress = async (
         problemId: string,
         updates: Partial<Omit<ProblemProgress, "problem_id">>
     ) => {
@@ -53,7 +114,7 @@ export function useProgress() {
             status: updates.status || existingProgress?.status || "attempted",
             code: updates.code || existingProgress?.code,
             language: updates.language || existingProgress?.language,
-            solved_at: updates.status === "solved" ? now : existingProgress?.solved_at,
+            solved_at: updates.status === "solved" ? (updates.status === existingProgress?.status ? existingProgress.solved_at : now) : existingProgress?.solved_at,
         };
 
         const newState = {
@@ -61,8 +122,26 @@ export function useProgress() {
             [problemId]: newProgress
         };
 
+        // 1. Optimistic UI update
         setProgress(newState);
         localStorage.setItem(`progress_${user.id}`, JSON.stringify(Object.values(newState)));
+
+        // 2. Write to Supabase
+        try {
+            const { error } = await supabase.from('problem_progress').upsert({
+                user_id: user.id,
+                problem_id: problemId,
+                status: newProgress.status,
+                code: newProgress.code,
+                language: newProgress.language,
+                solved_at: newProgress.solved_at
+            });
+
+            if (error) throw error;
+        } catch (err) {
+            console.error("Error saving progress to Supabase:", err);
+            // Optionally revert state or show toast
+        }
     };
 
     const getProgress = (problemId: string): ProblemProgress | null => {

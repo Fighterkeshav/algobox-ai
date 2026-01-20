@@ -89,7 +89,7 @@ export default function Landing() {
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3">Login</Button>
             </Link>
-            <Link to="/signup">
+            <Link to={user ? "/dashboard" : "/signup"}>
               <Button size="sm" className="group text-xs sm:text-sm px-2 sm:px-4">
                 <span className="hidden sm:inline">Get Started</span>
                 <span className="sm:hidden">Start</span>
@@ -125,13 +125,8 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-<<<<<<< HEAD
-              <Link to={user ? "/dashboard" : "/signup"}>
-                <Button size="lg" className="group animate-pulse [animation-delay:2s] hover:animate-none">
-=======
-              <Link to="/signup" className="w-full sm:w-auto">
-                <Button size="lg" className="group animate-pulse hover:animate-none w-full sm:w-auto">
->>>>>>> b012c708a4a6517bdffa3492caf383f9f4b6ebb2
+              <Link to={user ? "/dashboard" : "/signup"} className="w-full sm:w-auto">
+                <Button size="lg" className="group animate-pulse [animation-delay:2s] hover:animate-none w-full sm:w-auto">
                   Start Your Journey
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
@@ -191,7 +186,7 @@ export default function Landing() {
             <p className="mx-auto mb-5 sm:mb-6 max-w-lg text-xs sm:text-sm md:text-base text-muted-foreground">
               Join developers who are using Algobox to master algorithms and land their dream jobs.
             </p>
-            <Link to="/signup">
+            <Link to={user ? "/dashboard" : "/signup"}>
               <Button size="lg">
                 Start Learning Now
                 <ArrowRight className="ml-2 h-4 w-4" />
