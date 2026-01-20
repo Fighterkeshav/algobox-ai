@@ -51,13 +51,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const signUp = async (email: string, password: string, username?: string) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: { username },
             },
         });
+
+        // Trigger welcome email via Inngest if signup successful
+        if (!error && data?.user) {
+            try {
+                const { inngestClient } = await import("@/lib/inngest/client");
+                await inngestClient.send({
+                    name: "user.signup",
+                    data: {
+                        userId: data.user.id,
+                        email: email,
+                        name: username || email.split('@')[0],
+                    },
+                });
+            } catch (e) {
+                console.error("Failed to trigger welcome email:", e);
+            }
+        }
+
         return { error };
     };
 

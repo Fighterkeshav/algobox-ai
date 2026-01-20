@@ -1,6 +1,6 @@
 import { Inngest, EventSchemas } from "inngest";
 
-// valid event keys:
+// Event types for frontend-triggered Inngest events
 type Events = {
     "user.completed.lab": {
         data: {
@@ -15,13 +15,20 @@ type Events = {
             prompt: string;
             context?: string;
         }
-    }
+    };
+    "user.signup": {
+        data: {
+            userId: string;
+            email: string;
+            name?: string;
+        }
+    };
 };
 
 export const inngest = new Inngest({
     id: "algobox-ai",
-<<<<<<< HEAD
     schemas: new EventSchemas().fromRecord<Events>(),
-=======
->>>>>>> b012c708a4a6517bdffa3492caf383f9f4b6ebb2
 });
+
+// Alias for clearer naming in components
+export const inngestClient = inngest;

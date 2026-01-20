@@ -46,20 +46,37 @@ export type Events = {
         };
     };
 
-    // Scheduling & Reporting
-    "user.weekly.report": {
+    // User Lifecycle Events
+    "user.signup": {
         data: {
-            userId?: string; // Optional: if null, runs for all appropriate users (fan-out)
+            userId: string;
+            email: string;
+            name?: string;
         };
     };
 
-    // System
+    // Scheduling & Reporting
+    "user.weekly.report": {
+        data: {
+            userId: string;
+            username?: string;
+            score?: number;
+        };
+    };
+
+    // Email Events
     "app/send.email": {
         data: {
             to: string;
             subject: string;
             template: string;
             vars?: Record<string, any>;
+        };
+    };
+    "app/send.streak-reminder": {
+        data: {
+            userId: string;
+            username?: string;
         };
     };
 };
