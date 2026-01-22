@@ -37,7 +37,9 @@ import { toast } from "sonner";
 import GeneratingLoader from "@/components/ui/GeneratingLoader";
 import { D3NQueenVisualization } from "@/components/visualisation/D3NQueenVisualization";
 import { D3PrimesVisualization } from "@/components/visualisation/D3PrimesVisualization";
+import { CodeExecutionPanel } from "@/components/visualisation/CodeExecutionPanel";
 import { generateNQueenSteps, generateSieveSteps, generateMazeGrid } from "@/lib/algorithms/extraGenerators";
+import type { AlgorithmId } from "@/lib/algorithms/algorithmCode";
 
 type Algorithm =
   | "bubble-sort"
@@ -843,8 +845,8 @@ export default function Visualise() {
         newSteps = generateNQueenSteps(paramValue || 8);
         break;
       case "sieve":
-         newSteps = generateSieveSteps(paramValue || 50);
-         break;
+        newSteps = generateSieveSteps(paramValue || 50);
+        break;
     }
 
     setSteps(newSteps);
@@ -943,7 +945,7 @@ export default function Visualise() {
         </TabsList>
 
         <TabsContent value="algorithms" className="flex-1 mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
             <Card className="lg:col-span-1 h-fit">
               <CardHeader>
                 <CardTitle className="text-lg">Configuration</CardTitle>
@@ -1007,23 +1009,23 @@ export default function Visualise() {
 
                 {/* Maze Generation Button */}
                 {["dijkstra", "a-star", "bfs"].includes(algorithm) && (
-                    <Button 
-                        variant="secondary" 
-                        className="w-full mt-2"
-                        onClick={() => {
-                            // Assuming setGrid exists from previous implementation context, or we need to access the store/state if it was local in generator.
-                            // Actually, generateSteps uses internal state or helper creates it.
-                            // The grid state usually resides in the component to trigger re-render of separate visualizer?
-                            // Wait, D3GridVisualization takes step.state.grid.
-                            // So "Generate Maze" implies we need to RUN a generation step that updates the 'grid' variable used by pathfinders?
-                            // Pathfinders in Visualise.tsx likely use a hardcoded grid or context.
-                            // I'll skip Maze button here if it requires complex refactoring of 'grid' source.
-                            // Instead, I'll focus on the content.
-                            toast.info("Maze generation enabled for next run!");
-                        }}
-                    >
-                        Random Maze Mode
-                    </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-full mt-2"
+                    onClick={() => {
+                      // Assuming setGrid exists from previous implementation context, or we need to access the store/state if it was local in generator.
+                      // Actually, generateSteps uses internal state or helper creates it.
+                      // The grid state usually resides in the component to trigger re-render of separate visualizer?
+                      // Wait, D3GridVisualization takes step.state.grid.
+                      // So "Generate Maze" implies we need to RUN a generation step that updates the 'grid' variable used by pathfinders?
+                      // Pathfinders in Visualise.tsx likely use a hardcoded grid or context.
+                      // I'll skip Maze button here if it requires complex refactoring of 'grid' source.
+                      // Instead, I'll focus on the content.
+                      toast.info("Maze generation enabled for next run!");
+                    }}
+                  >
+                    Random Maze Mode
+                  </Button>
                 )}
 
                 <div className="flex items-center justify-center gap-2">
@@ -1058,6 +1060,16 @@ export default function Visualise() {
                   />
                 </div>
               </CardContent>
+            </Card>
+
+            {/* Code Execution Panel */}
+            <Card className="lg:col-span-1 h-fit">
+              <CodeExecutionPanel
+                algorithm={algorithm as AlgorithmId}
+                currentStep={currentStepData}
+                stepIndex={currentStep}
+                totalSteps={steps.length}
+              />
             </Card>
 
             <Card className="lg:col-span-2 flex flex-col">
