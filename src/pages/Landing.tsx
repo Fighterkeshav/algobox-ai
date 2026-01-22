@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
+import { PatternShowcase } from "@/components/landing/PatternShowcase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import { FloatingElements } from "@/components/ui/FloatingElements";
 import {
   ArrowRight,
   Code2,
@@ -14,6 +16,13 @@ import {
   Target,
   ChevronRight,
 } from "lucide-react";
+import {
+  useScrollAnimation,
+  useStaggerAnimation,
+  useTextReveal,
+  useHoverAnimation
+} from "@/lib/animations";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   {
@@ -46,6 +55,11 @@ const features = [
     title: "Progress Analytics",
     description: "Skill heatmaps, mistake patterns, and consistency tracking to optimize your learning.",
   },
+  {
+    icon: <Target className="h-6 w-6" />,
+    title: "Gamified Learning",
+    description: "Earn badges, maintain streaks, and climb the leaderboard as you master new algorithms.",
+  },
 ];
 
 const stats = [
@@ -55,20 +69,32 @@ const stats = [
 ];
 
 export default function Landing() {
+  const { user } = useAuth();
+  const heroRef = useScrollAnimation({ animation: "fadeInUp", delay: 0.1 });
+  const titleRef = useTextReveal(); // For "Master Algorithms..."
+  const featuresRef = useStaggerAnimation(0.1, "fadeInUp");
+  const statsRef = useStaggerAnimation(0.2, "scaleIn");
+  const ctaRef = useScrollAnimation({ animation: "scaleIn", delay: 0.2 });
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Subtle Animated Background */}
+      <AnimatedBackground variant="default" intensity="low" />
+      <FloatingElements count={8} />
+
       {/* Navigation */}
-      <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <nav className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
+        <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <Logo size="md" />
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard">
-              <Button variant="ghost">Dashboard</Button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3">Login</Button>
             </Link>
-            <Link to="/dashboard">
-              <Button>
-                Get Started
-                <ArrowRight className="ml-1 h-4 w-4" />
+            <Link to={user ? "/dashboard" : "/signup"}>
+              <Button size="sm" className="group text-xs sm:text-sm px-2 sm:px-4">
+                <span className="hidden sm:inline">Get Started</span>
+                <span className="sm:hidden">Start</span>
+                <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </div>
@@ -76,147 +102,130 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-32 pb-20">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-grid opacity-20" />
-        <div className="absolute top-1/4 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" />
-        
-        <div className="container relative mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mx-auto max-w-4xl text-center"
+      <section className="relative pt-24 sm:pt-28 pb-12 sm:pb-16 px-4">
+        <div className="container relative mx-auto">
+          <div
+            ref={heroRef}
+            className="mx-auto max-w-3xl text-center"
           >
-            <Badge variant="info" className="mb-6">
-              <Zap className="mr-1 h-3 w-3" />
-              Now with AI-Powered Learning
+            <Badge variant="outline" className="mb-4 sm:mb-5 text-[10px] sm:text-xs font-medium">
+              <Zap className="mr-1 sm:mr-1.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
+              AI-Powered Learning Platform
             </Badge>
-            
-            <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight md:text-7xl">
-              Master Algorithms with
-              <span className="block text-primary">AI-Guided Precision</span>
+
+            <h1 className="mb-4 sm:mb-5 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
+              <span ref={titleRef} className="block">Master Algorithms with</span>
+              <span className="block text-primary mt-1 bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
+                AI-Guided Precision
+              </span>
             </h1>
-            
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              Algobox transforms beginners into industry-ready problem solvers through 
+
+            <p className="mx-auto mb-6 sm:mb-8 max-w-xl text-sm sm:text-base md:text-lg text-muted-foreground px-2">
+              Transform into an industry-ready problem solver through
               adaptive roadmaps, real-time AI debugging, and personalized practice.
             </p>
 
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link to="/dashboard">
-                <Button size="xl">
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link to={user ? "/dashboard" : "/signup"} className="w-full sm:w-auto">
+                <Button size="lg" className="group animate-pulse [animation-delay:2s] hover:animate-none w-full sm:w-auto">
                   Start Your Journey
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <Link to="/roadmap">
-                <Button variant="outline" size="xl">
+              <Link to="/roadmap" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Explore Roadmaps
                 </Button>
               </Link>
             </div>
 
             {/* Stats */}
-            <div className="mt-16 flex items-center justify-center gap-12">
+            <div
+              ref={statsRef}
+              className="mt-10 sm:mt-12 flex items-center justify-center gap-6 sm:gap-8 md:gap-12"
+            >
               {stats.map((stat) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  className="text-center"
-                >
-                  <div className="text-3xl font-bold text-primary">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </motion.div>
+                <div key={stat.label} className="text-center">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-semibold text-primary">
+                    {stat.value}
+                  </div>
+                  <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{stat.label}</div>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="mb-16 text-center"
-          >
-            <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-              Everything You Need to
-              <span className="text-gradient"> Level Up</span>
+      <section className="py-12 sm:py-16 relative px-4">
+        <div className="container mx-auto">
+          <div className="mb-8 sm:mb-10 text-center">
+            <h2 className="mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl font-bold">
+              Everything You Need to Level Up
             </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              A complete learning ecosystem designed to accelerate your coding journey from beginner to expert.
+            <p className="mx-auto max-w-xl text-xs sm:text-sm md:text-base text-muted-foreground px-2">
+              A complete learning ecosystem designed to accelerate your coding journey.
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div ref={featuresRef} className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="group relative rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
-              >
-                <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary">
-                  {feature.icon}
-                </div>
-                <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
-                <ChevronRight className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
-              </motion.div>
+              <FeatureCard key={feature.title} feature={feature} />
             ))}
           </div>
         </div>
       </section>
 
+      {/* Pattern Showcase Section */}
+      <PatternShowcase />
+
       {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-12 text-center"
-          >
-            <div className="absolute inset-0 bg-grid opacity-10" />
-            <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-primary/20 blur-[100px]" />
-            
-            <div className="relative">
-              <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-                Ready to Transform Your Coding Skills?
-              </h2>
-              <p className="mx-auto mb-8 max-w-xl text-muted-foreground">
-                Join thousands of developers who are using Algobox to master algorithms and land their dream jobs.
-              </p>
-              <Link to="/dashboard">
-                <Button size="xl">
-                  Start Learning Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+      <section className="py-12 sm:py-16 relative px-4">
+        <div className="container mx-auto">
+          <div ref={ctaRef} className="relative overflow-hidden rounded-xl border border-border bg-card p-6 sm:p-8 md:p-10 text-center">
+            <h2 className="mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl font-bold">
+              Ready to Transform Your Coding Skills?
+            </h2>
+            <p className="mx-auto mb-5 sm:mb-6 max-w-lg text-xs sm:text-sm md:text-base text-muted-foreground">
+              Join developers who are using Algobox to master algorithms and land their dream jobs.
+            </p>
+            <Link to={user ? "/dashboard" : "/signup"}>
+              <Button size="lg">
+                Start Learning Now
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <div className="container mx-auto flex items-center justify-between px-4">
+      <footer className="border-t border-border py-4 sm:py-6 px-4">
+        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <Logo size="sm" />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center sm:text-left">
             © 2024 Algobox. Built for developers, by developers.
           </p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function FeatureCard({ feature }: { feature: any }) {
+  const ref = useHoverAnimation(1.05);
+  return (
+    <div
+      ref={ref}
+      className="group relative rounded-lg border border-border bg-card p-4 sm:p-5 transition-colors hover:border-primary/40"
+    >
+      <div className="mb-2 sm:mb-3 inline-flex rounded-md bg-primary/10 p-2 sm:p-2.5 text-primary">
+        {feature.icon}
+      </div>
+      <h3 className="mb-1 sm:mb-1.5 text-sm sm:text-base font-semibold">{feature.title}</h3>
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+      <ChevronRight className="absolute right-3 sm:right-4 top-1/2 h-3 w-3 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
     </div>
   );
 }

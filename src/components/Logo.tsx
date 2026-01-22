@@ -36,32 +36,32 @@ export function Logo({ className, showText = true, size = "md" }: LogoProps) {
             width="28"
             height="28"
             rx="6"
-            stroke="hsl(217 91% 60%)"
+            stroke="hsl(192 85% 50%)"
             strokeWidth="2"
             fill="none"
           />
-          
+
           {/* Code brackets */}
           <path
             d="M12 10L8 16L12 22"
-            stroke="hsl(217 91% 60%)"
+            stroke="hsl(192 85% 50%)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <path
             d="M20 10L24 16L20 22"
-            stroke="hsl(217 91% 60%)"
+            stroke="hsl(192 85% 50%)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          
+
           {/* Center dot */}
-          <circle cx="16" cy="16" r="2" fill="hsl(217 91% 60%)" />
+          <circle cx="16" cy="16" r="2" fill="hsl(192 85% 50%)" />
         </svg>
       </div>
-      
+
       {showText && (
         <span className={cn(
           "font-bold tracking-tight text-foreground",

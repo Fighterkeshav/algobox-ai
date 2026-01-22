@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiUrl } from "@/lib/api";
 
 export function useAlgoRun() {
   const [loading, setLoading] = useState(false);
@@ -8,7 +9,7 @@ export function useAlgoRun() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/visualise/run', {
+      const response = await fetch(apiUrl('/api/visualise/run'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ algorithm, input }),
@@ -28,7 +29,7 @@ export function useAlgoRun() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/visualise/run/${id}`);
+      const response = await fetch(apiUrl(`/api/visualise/run/${id}`));
       if (!response.ok) throw new Error('Failed to fetch run');
       const data = await response.json();
       return data;

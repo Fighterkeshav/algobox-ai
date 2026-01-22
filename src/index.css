@@ -18,8 +18,8 @@
     --popover: 220 16% 11%;
     --popover-foreground: 220 13% 91%;
 
-    /* Professional blue accent */
-    --primary: 217 91% 60%;
+    /* Futuristic Cyan accent - matches shooting stars */
+    --primary: 192 85% 50%;
     --primary-foreground: 220 16% 7%;
 
     --secondary: 220 14% 14%;
@@ -28,7 +28,7 @@
     --muted: 220 14% 12%;
     --muted-foreground: 220 9% 50%;
 
-    --accent: 217 91% 55%;
+    --accent: 192 80% 45%;
     --accent-foreground: 220 13% 91%;
 
     --destructive: 0 72% 51%;
@@ -42,19 +42,19 @@
 
     --border: 220 14% 16%;
     --input: 220 14% 14%;
-    --ring: 217 91% 60%;
+    --ring: 192 85% 50%;
 
     --radius: 0.5rem;
 
     /* Sidebar */
     --sidebar-background: 220 16% 6%;
-    --sidebar-foreground: 220 9% 55%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-foreground: 220 13% 80%;
+    --sidebar-primary: 192 85% 50%;
     --sidebar-primary-foreground: 220 16% 7%;
     --sidebar-accent: 220 14% 12%;
     --sidebar-accent-foreground: 220 13% 91%;
     --sidebar-border: 220 14% 12%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 192 85% 50%;
 
     /* Custom Algobox tokens */
     --surface-elevated: 220 16% 11%;
@@ -78,7 +78,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 16% 11%;
 
-    --primary: 217 91% 50%;
+    --primary: 192 85% 40%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 96%;
@@ -87,7 +87,7 @@
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
 
-    --accent: 217 91% 45%;
+    --accent: 192 80% 35%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -101,16 +101,16 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 217 91% 50%;
+    --ring: 192 85% 40%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 220 16% 11%;
-    --sidebar-primary: 217 91% 50%;
+    --sidebar-primary: 192 85% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 220 16% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 50%;
+    --sidebar-ring: 192 85% 40%;
   }
 }
 
@@ -128,7 +128,9 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
 
-  code, pre, .font-mono {
+  code,
+  pre,
+  .font-mono {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
 
@@ -153,6 +155,7 @@
 }
 
 @layer components {
+
   /* Glass effect */
   .glass {
     background: hsl(var(--surface-overlay) / 0.8);
@@ -195,6 +198,7 @@
 }
 
 @layer utilities {
+
   /* Animation utilities */
   .animate-in {
     animation: fadeIn 0.3s ease-out;
@@ -205,15 +209,26 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
+  @keyframes aurora {
+    from {
+      background-position: 50% 50%, 50% 50%;
+    }
+
+    to {
+      background-position: 350% 50%, 350% 50%;
+    }
+  }
+
   /* Grid patterns */
   .bg-grid {
-    background-image: 
+    background-image:
       linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
       linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
     background-size: 40px 40px;

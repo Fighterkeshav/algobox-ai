@@ -1,3 +1,5 @@
+
+
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,47 +16,26 @@ import {
   Activity,
   Zap,
 } from "lucide-react";
-
-// Mock analytics data
-const weeklyActivity = [
-  { day: "Mon", problems: 5, minutes: 45 },
-  { day: "Tue", problems: 3, minutes: 30 },
-  { day: "Wed", problems: 7, minutes: 65 },
-  { day: "Thu", problems: 4, minutes: 40 },
-  { day: "Fri", problems: 6, minutes: 55 },
-  { day: "Sat", problems: 2, minutes: 20 },
-  { day: "Sun", problems: 8, minutes: 75 },
-];
-
-const skillBreakdown = [
-  { name: "Arrays", level: 85, trend: "up" },
-  { name: "Strings", level: 72, trend: "up" },
-  { name: "Hash Tables", level: 65, trend: "up" },
-  { name: "Linked Lists", level: 45, trend: "down" },
-  { name: "Trees", level: 30, trend: "neutral" },
-  { name: "Dynamic Programming", level: 20, trend: "up" },
-];
-
-const mistakePatterns = [
-  { pattern: "Off-by-one errors", count: 12, percentage: 28 },
-  { pattern: "Edge case handling", count: 9, percentage: 21 },
-  { pattern: "Time complexity", count: 7, percentage: 16 },
-  { pattern: "Wrong data structure", count: 6, percentage: 14 },
-  { pattern: "Incorrect base case", count: 5, percentage: 12 },
-  { pattern: "Other", count: 4, percentage: 9 },
-];
-
-const stats = {
-  totalProblems: 47,
-  thisWeek: 35,
-  avgTimePerProblem: "12 min",
-  successRate: 78,
-  currentStreak: 12,
-  longestStreak: 23,
-};
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 export default function Analytics() {
-  const maxProblems = Math.max(...weeklyActivity.map(d => d.problems));
+  const { data, loading } = useAnalytics();
+
+  // While loading or if no data, show skeletons or empty state?
+  // For now simple return or use default empty values
+  const stats = data || {
+    totalProblems: 0,
+    solvedCount: 0,
+    successRate: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    thisWeekCount: 0,
+    avgTimePerProblem: "N/A",
+    weeklyActivity: [],
+    skillBreakdown: []
+  };
+
+  const maxProblems = Math.max(...(stats.weeklyActivity.length > 0 ? stats.weeklyActivity.map(d => d.problems) : [1]));
 
   return (
     <div className="p-6 lg:p-8">
@@ -78,22 +59,22 @@ export default function Analytics() {
         <StatCard
           icon={<Target className="h-5 w-5" />}
           label="Total Problems"
-          value={stats.totalProblems.toString()}
-          change={`+${stats.thisWeek} this week`}
+          value={stats.solvedCount.toString()}
+          change={`+${stats.thisWeekCount} this week`}
           trend="up"
         />
         <StatCard
           icon={<Clock className="h-5 w-5" />}
           label="Avg. Time"
           value={stats.avgTimePerProblem}
-          change="-2 min from last week"
-          trend="up"
+          change="-- min from last week"
+          trend="neutral"
         />
         <StatCard
           icon={<Zap className="h-5 w-5" />}
           label="Success Rate"
           value={`${stats.successRate}%`}
-          change="+5% improvement"
+          change="Keep it up!"
           trend="up"
         />
         <StatCard
@@ -101,7 +82,7 @@ export default function Analytics() {
           label="Current Streak"
           value={`${stats.currentStreak} days`}
           change={`Best: ${stats.longestStreak} days`}
-          trend="neutral"
+          trend={stats.currentStreak > 0 ? "up" : "neutral"}
         />
       </motion.div>
 
@@ -118,18 +99,18 @@ export default function Analytics() {
               <Calendar className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-semibold">Weekly Activity</h2>
             </div>
-            <Badge variant="info">This Week</Badge>
+            <Badge variant="info">Last 7 Days</Badge>
           </div>
-          
+
           {/* Bar Chart */}
           <div className="flex items-end justify-between gap-2 h-48">
-            {weeklyActivity.map((day) => (
-              <div key={day.day} className="flex flex-1 flex-col items-center gap-2">
+            {stats.weeklyActivity.length > 0 ? stats.weeklyActivity.map((day, i) => (
+              <div key={i} className="flex flex-1 flex-col items-center gap-2">
                 <div
                   className="w-full rounded-t-md bg-primary/20 transition-all hover:bg-primary/40 relative group"
                   style={{ height: `${(day.problems / maxProblems) * 100}%`, minHeight: "8px" }}
                 >
-                  <div 
+                  <div
                     className="absolute bottom-0 left-0 right-0 rounded-t-md bg-primary transition-all"
                     style={{ height: `${(day.problems / maxProblems) * 100}%` }}
                   />
@@ -139,14 +120,11 @@ export default function Analytics() {
                 </div>
                 <span className="text-xs text-muted-foreground">{day.day}</span>
               </div>
-            ))}
+            )) : <div className="w-full h-full flex items-center justify-center text-muted-foreground">No activity data yet</div>}
           </div>
 
           <div className="mt-4 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total: {weeklyActivity.reduce((sum, d) => sum + d.problems, 0)} problems</span>
-            <span className="text-muted-foreground">
-              Time: {Math.round(weeklyActivity.reduce((sum, d) => sum + d.minutes, 0) / 60)}h {weeklyActivity.reduce((sum, d) => sum + d.minutes, 0) % 60}m
-            </span>
+            <span className="text-muted-foreground">Total: {stats.thisWeekCount} problems</span>
           </div>
         </motion.div>
 
@@ -165,57 +143,17 @@ export default function Analytics() {
           </div>
 
           <div className="space-y-4">
-            {skillBreakdown.map((skill) => (
+            {stats.skillBreakdown.length > 0 ? stats.skillBreakdown.map((skill) => (
               <div key={skill.name} className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{skill.name}</span>
+                  <span className="text-sm font-medium capitalize">{skill.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{skill.level}%</span>
-                    {skill.trend === "up" && <TrendingUp className="h-4 w-4 text-success" />}
-                    {skill.trend === "down" && <TrendingDown className="h-4 w-4 text-destructive" />}
+                    <span className="text-sm text-muted-foreground">{skill.level}% ({skill.solved}/{skill.total})</span>
                   </div>
                 </div>
                 <Progress value={skill.level} className="h-2" />
               </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Mistake Patterns */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="rounded-xl border border-border bg-card p-6"
-        >
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">Common Mistakes</h2>
-            </div>
-            <Badge variant="warning">{mistakePatterns.reduce((sum, p) => sum + p.count, 0)} total</Badge>
-          </div>
-
-          <div className="space-y-3">
-            {mistakePatterns.map((pattern, index) => (
-              <div key={pattern.pattern} className="flex items-center gap-3">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                  {index + 1}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">{pattern.pattern}</span>
-                    <span className="text-sm text-muted-foreground">{pattern.count}</span>
-                  </div>
-                  <div className="mt-1 h-1.5 w-full rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-destructive/60"
-                      style={{ width: `${pattern.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+            )) : <div className="text-center text-muted-foreground py-10">Solve problems to see skill stats</div>}
           </div>
         </motion.div>
 
@@ -224,49 +162,34 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="rounded-xl border border-border bg-card p-6"
+          className="rounded-xl border border-border bg-card p-6 lg:col-span-2"
         >
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <PieChart className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-semibold">Practice Consistency</h2>
             </div>
-            <Badge variant="success">12 day streak</Badge>
+            <Badge variant="success">{stats.currentStreak} day streak</Badge>
           </div>
 
-          {/* Simplified Heatmap Grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: 35 }).map((_, i) => {
-              const intensity = Math.random();
+          <div className="grid grid-cols-7 gap-1 sm:grid-cols-[repeat(auto-fit,minmax(30px,1fr))]">
+            {/* Simplified placeholder for heatmap - full impl requires 365 days of data */}
+            {/* Just showing last 30 days as a placeholder for now until we have full history */}
+            {Array.from({ length: 30 }).map((_, i) => {
+              // Mocking visual intensity for non-data days just to keep UI looking roughly same structure,
+              // but ideally this should be real. 
+              // Since we don't have full history, I'll just show "gray" for unknown days and green for known active days?
+              // Let's just keep it simple: Render days, but all gray if 0.
               return (
                 <div
                   key={i}
-                  className="aspect-square rounded-sm transition-colors hover:ring-1 hover:ring-primary"
-                  style={{
-                    backgroundColor:
-                      intensity > 0.8
-                        ? "hsl(var(--success))"
-                        : intensity > 0.5
-                        ? "hsl(var(--success) / 0.6)"
-                        : intensity > 0.2
-                        ? "hsl(var(--success) / 0.3)"
-                        : "hsl(var(--muted))",
-                  }}
+                  className="aspect-square rounded-sm bg-muted transition-colors hover:ring-1 hover:ring-primary"
+                  title="No data"
                 />
               );
             })}
           </div>
-
-          <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Less</span>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded-sm bg-muted" />
-              <div className="h-3 w-3 rounded-sm bg-success/30" />
-              <div className="h-3 w-3 rounded-sm bg-success/60" />
-              <div className="h-3 w-3 rounded-sm bg-success" />
-            </div>
-            <span>More</span>
-          </div>
+          <div className="mt-2 text-xs text-center text-muted-foreground">Heatmap requires more history to be meaningful.</div>
         </motion.div>
       </div>
     </div>
@@ -289,9 +212,8 @@ function StatCard({ icon, label, value, change, trend }: StatCardProps) {
       </div>
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm text-muted-foreground">{label}</div>
-      <div className={`mt-1 flex items-center gap-1 text-xs ${
-        trend === "up" ? "text-success" : trend === "down" ? "text-destructive" : "text-muted-foreground"
-      }`}>
+      <div className={`mt-1 flex items-center gap-1 text-xs ${trend === "up" ? "text-success" : trend === "down" ? "text-destructive" : "text-muted-foreground"
+        }`}>
         {trend === "up" && <TrendingUp className="h-3 w-3" />}
         {trend === "down" && <TrendingDown className="h-3 w-3" />}
         {change}
