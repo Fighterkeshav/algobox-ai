@@ -18,6 +18,7 @@ import {
 import { Link } from "react-router-dom";
 import { useProgress } from "@/hooks/useProgress";
 import { PROBLEMS, getCategories } from "@/lib/problems/problemLibrary";
+import { PATTERNS } from "@/lib/patterns/patternLibrary";
 import { formatDistanceToNow } from "date-fns";
 import {
   useScrollAnimation,
@@ -34,6 +35,16 @@ export default function Dashboard() {
   // 1. Stats Calculation
   const totalProblems = PROBLEMS.length;
   const completedProblems = getSolvedCount();
+
+  // Calculate Pattern Mastery
+  const masteredPatternsCount = useMemo(() => {
+    return PATTERNS.filter(pattern => {
+      const total = pattern.relatedProblems.length;
+      if (total === 0) return false;
+      const solved = pattern.relatedProblems.filter(pid => progress[pid]?.status === "solved").length;
+      return (solved / total) >= 0.8; // Considered mastered if > 80% problems solved
+    }).length;
+  }, [progress]);
 
   // Calculate Streak
   const streak = useMemo(() => {
@@ -206,6 +217,59 @@ export default function Dashboard() {
         <div ref={sidebarRef} className="space-y-4 sm:space-y-6">
           {/* Quick Practice */}
           <QuickPracticeCard />
+
+          {/* NEW: Learn Patterns Card */}
+          <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4 sm:p-6 relative overflow-hidden group">
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="info" className="text-[10px] bg-primary/20 text-primary hover:bg-primary/30 border-primary/20">
+                  NEW FEATURES
+                </Badge>
+              </div>
+              <h3 className="font-semibold text-base sm:text-lg mb-1">Master Patterns</h3>
+              <p className="mb-4 text-xs sm:text-sm text-muted-foreground">
+                {masteredPatternsCount > 0
+                  ? `You've mastered ${masteredPatternsCount} of ${PATTERNS.length} patterns! Keep going.`
+                  : "Learn reusable templates to solve hundreds of problems."}
+              </p>
+
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex-1 bg-background/50 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-500"
+                    style={{ width: `${(masteredPatternsCount / PATTERNS.length) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground">{masteredPatternsCount}/{PATTERNS.length}</span>
+              </div>
+
+              <div className="space-y-2">
+                <Link to="/patterns">
+                  <Button variant="default" size="sm" className="w-full justify-start gap-2 text-xs shadow-md">
+                    <Sparkles className="h-3 w-3" />
+                    Browse Patterns
+                  </Button>
+                </Link>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link to="/algorithm-picker">
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-xs bg-background/50 hover:bg-background">
+                      <Target className="h-3 w-3" />
+                      Picker
+                    </Button>
+                  </Link>
+                  <Link to="/cheat-sheets">
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-xs bg-background/50 hover:bg-background">
+                      <Code2 className="h-3 w-3" />
+                      Cheats
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Decorative background element */}
+            <div className="absolute -right-6 -top-6 h-24 w-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500" />
+          </div>
 
           {/* Milestones */}
           <div className="rounded-xl border border-border bg-card p-4 sm:p-6">

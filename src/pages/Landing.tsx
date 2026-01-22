@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
+import { PatternShowcase } from "@/components/landing/PatternShowcase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
@@ -175,6 +176,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Pattern Showcase Section */}
+      <PatternShowcase />
 
       {/* CTA Section */}
       <section className="py-12 sm:py-16 relative px-4">

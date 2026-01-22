@@ -19,8 +19,13 @@ import Visualise from "./pages/Visualise";
 import CyberLab from "./pages/CyberLab";
 import BattleMode from "./pages/BattleMode";
 import Leaderboard from "./pages/Leaderboard";
+import Patterns from "./pages/Patterns";
+import PatternDetail from "./pages/PatternDetail";
+import AlgorithmPicker from "./pages/AlgorithmPicker";
+import CheatSheets from "./pages/CheatSheets";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { AnalyticsListener } from "./components/AnalyticsListener";
+import { FloatingActionButtons } from "./components/FloatingActionButtons";
 import { useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -49,21 +54,31 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AnalyticsListener />
+          <FloatingActionButtons />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+              {/* Overview */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/roadmap" element={<Roadmap />} />
-              <Route path="/practice" element={<Practice />} />
+              {/* Learn */}
+              <Route path="/patterns" element={<Patterns />} />
+              <Route path="/patterns/:patternId" element={<PatternDetail />} />
+              <Route path="/algorithm-picker" element={<AlgorithmPicker />} />
+              <Route path="/cheat-sheets" element={<CheatSheets />} />
               <Route path="/visualise" element={<Visualise />} />
+              {/* Practice */}
+              <Route path="/practice" element={<Practice />} />
               <Route path="/cyber-lab" element={<CyberLab />} />
+              {/* Compete */}
+              <Route path="/battle" element={<BattleMode />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              {/* Track */}
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/notes" element={<Notes />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/battle" element={<BattleMode />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
