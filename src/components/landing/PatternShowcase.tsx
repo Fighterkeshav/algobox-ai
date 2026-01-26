@@ -38,23 +38,23 @@ export function PatternShowcase() {
                 </div>
 
                 {/* Category Pills */}
-                <div className="flex flex-wrap justify-center gap-2 mb-8">
+                <div className="flex flex-wrap justify-center gap-2 mb-10">
                     {PATTERN_CATEGORIES.slice(0, 6).map((category) => (
                         <div
                             key={category.id}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border text-sm"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/5 text-sm hover:border-primary/40 transition-colors"
                         >
                             <span>{category.icon}</span>
                             <span>{category.name}</span>
                         </div>
                     ))}
-                    <div className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    <div className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
                         +{PATTERN_CATEGORIES.length - 6} more
                     </div>
                 </div>
 
                 {/* Top Patterns Grid */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-10">
                     {topPatterns.map((pattern, idx) => {
                         const category = PATTERN_CATEGORIES.find(
                             (c) => c.id === pattern.category
@@ -69,9 +69,9 @@ export function PatternShowcase() {
                                 transition={{ delay: idx * 0.1 }}
                             >
                                 <Link to="/signup">
-                                    <div className="group relative h-full rounded-xl border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg">
+                                    <div className="group relative h-full rounded-2xl border border-white/5 glass-card p-6 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
                                         {/* Rank Badge */}
-                                        <div className="absolute -top-2 -left-2 flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md">
+                                        <div className="absolute -top-3 -left-3 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/20">
                                             #{idx + 1}
                                         </div>
 

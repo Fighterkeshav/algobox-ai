@@ -35,11 +35,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import GeneratingLoader from "@/components/ui/GeneratingLoader";
-import { D3NQueenVisualization } from "@/components/visualisation/D3NQueenVisualization";
-import { D3PrimesVisualization } from "@/components/visualisation/D3PrimesVisualization";
 import { CodeExecutionPanel } from "@/components/visualisation/CodeExecutionPanel";
 import { generateNQueenSteps, generateSieveSteps, generateMazeGrid } from "@/lib/algorithms/extraGenerators";
 import type { AlgorithmId } from "@/lib/algorithms/algorithmCode";
+import { VisualizationCanvas } from "@/components/visualisation/VisualizationCanvas";
+import { DetailedNotesPanel } from "@/components/visualisation/DetailedNotesPanel";
+import { PresentationMode } from "@/components/visualisation/PresentationMode";
+import { MonitorPlay } from "lucide-react";
 
 type Algorithm =
   | "bubble-sort"
@@ -807,6 +809,7 @@ export default function Visualise() {
   const [sqlQuery, setSqlQuery] = useState("SELECT * FROM users WHERE active = true;");
   const [sqlData, setSqlData] = useState<any[] | null>(null);
   const [isSqlLoading, setIsSqlLoading] = useState(false);
+  const [isPresentationOpen, setIsPresentationOpen] = useState(false);
 
   const generateSteps = useCallback(() => {
     const arr = inputArray.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n));
@@ -936,11 +939,20 @@ export default function Visualise() {
           <h1 className="text-2xl font-bold text-foreground">Interactive Visualization</h1>
           <p className="text-muted-foreground">Explore algorithms and data structures visually</p>
         </div>
+        <Button
+          variant="outline"
+          className="gap-2 border-primary/20 hover:bg-primary/10"
+          onClick={() => setIsPresentationOpen(true)}
+        >
+          <MonitorPlay className="h-4 w-4 text-primary" />
+          Presentation Mode
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="w-fit">
           <TabsTrigger value="algorithms">Algorithms</TabsTrigger>
+          <TabsTrigger value="notes">Expert Notes</TabsTrigger>
           <TabsTrigger value="sql">SQL Playground</TabsTrigger>
         </TabsList>
 
@@ -1084,26 +1096,11 @@ export default function Visualise() {
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
-                <div className="relative w-full h-[500px] rounded-lg overflow-hidden bg-[#0f172a]">
-                  {isSortingAlgo && currentStepData && (
-                    <D3SortingVisualization step={currentStepData} algorithm={algorithm} />
-                  )}
-                  {isSearchAlgo && currentStepData && (
-                    <D3BinarySearchVisualization step={currentStepData} />
-                  )}
-                  {algorithm === "dijkstra" && currentStepData && (
-                    <D3GraphVisualization step={currentStepData} />
-                  )}
-                  {(algorithm === "a-star" || algorithm === "bfs") && currentStepData && (
-                    <D3GridVisualization step={currentStepData} />
-                  )}
-                  {algorithm === "n-queen" && currentStepData && (
-                    <D3NQueenVisualization step={currentStepData} />
-                  )}
-                  {algorithm === "sieve" && currentStepData && (
-                    <D3PrimesVisualization step={currentStepData} />
-                  )}
-                </div>
+                <VisualizationCanvas
+                  algorithm={algorithm as AlgorithmId}
+                  currentStepData={currentStepData}
+                  height="500px"
+                />
 
                 {currentStepData && (
                   <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-3">
@@ -1149,10 +1146,31 @@ export default function Visualise() {
           </div>
         </TabsContent>
 
+        <TabsContent value="notes" className="flex-1 mt-6 h-full min-h-0">
+          <DetailedNotesPanel algorithm={algorithm as AlgorithmId} />
+        </TabsContent>
+
         <TabsContent value="sql" className="flex-1 mt-6">
           <SqlLabPlayground />
         </TabsContent>
       </Tabs>
+
+      <PresentationMode
+        algorithm={algorithm as AlgorithmId}
+        isOpen={isPresentationOpen}
+        onClose={() => setIsPresentationOpen(false)}
+        isPlaying={isPlaying}
+        onPlay={handlePlay}
+        onStepForward={handleStepForward}
+        onStepBack={handleStepBack}
+        onReset={handleReset}
+      >
+        <VisualizationCanvas
+          algorithm={algorithm as AlgorithmId}
+          currentStepData={currentStepData}
+          height="100%"
+        />
+      </PresentationMode>
     </div>
   );
 }
