@@ -7,62 +7,66 @@
 @layer base {
   :root {
     /* Obsidian / Deep Space Theme */
-    --background: 224 71% 4%; /* Deep Blue/Black #02040a */
-    --foreground: 210 40% 98%; /* Soft White #f1f5f9 */
+    /* Retro Grid Theme */
+    --background: 0 0% 2%;
+    /* #050505 */
+    --foreground: 210 40% 98%;
 
-    --card: 224 71% 7%; /* Slightly lighter than bg */
+    --card: 0 0% 4%;
+    /* #0a0a0a */
     --card-foreground: 210 40% 98%;
 
-    --popover: 224 71% 6%;
+    --popover: 0 0% 4%;
     --popover-foreground: 210 40% 98%;
 
-    /* Electric Cyan Primary */
-    --primary: 180 100% 50%; /* #00FFFF */
-    --primary-foreground: 224 71% 4%;
+    /* Neon Red Primary */
+    --primary: 0 84% 60%;
+    /* #ef4444 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 15%; /* Muted Dark Blue/Grey */
+    --secondary: 0 0% 10%;
+    /* #1a1a1a */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 15% 12%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 15%;
+    /* #262626 */
+    --muted-foreground: 0 0% 64%;
+    /* #a3a3a3 */
 
-    --accent: 190 100% 50%; /* Cyan accent */
-    --accent-foreground: 224 71% 4%;
+    --accent: 217 91% 60%;
+    /* #3b82f6 Blue */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 150 100% 40%;
-    --success-foreground: 210 40% 98%;
+    --border: 0 0% 15%;
+    /* #262626 */
+    --input: 0 0% 15%;
+    --ring: 0 84% 60%;
 
-    --warning: 35 100% 50%;
-    --warning-foreground: 210 40% 98%;
-
-    --border: 220 15% 12%;
-    --input: 220 15% 12%;
-    --ring: 180 100% 50%;
-
-    --radius: 0.5rem;
+    --radius: 0px;
+    /* Sharp corners for retro feel */
 
     /* Sidebar */
-    --sidebar-background: 224 71% 5%;
+    --sidebar-background: 0 0% 3%;
     --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 180 100% 50%;
-    --sidebar-primary-foreground: 224 71% 4%;
-    --sidebar-accent: 220 15% 12%;
+    --sidebar-primary: 0 84% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 15% 10%;
-    --sidebar-ring: 180 100% 50%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 0 84% 60%;
 
     /* Custom Surface Tokens */
-    --surface-elevated: 224 71% 8%;
-    --surface-overlay: 224 71% 6%;
-    --code-bg: 224 71% 3%;
-    --code-border: 220 15% 12%;
+    --surface-elevated: 0 0% 5%;
+    --surface-overlay: 0 0% 4%;
+    --code-bg: 0 0% 2%;
+    --code-border: 0 0% 15%;
   }
 
   .light {
-     /* Light theme fallback (if ever toggled) */
+    /* Light theme fallback (if ever toggled) */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -90,13 +94,19 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Outfit', 'Inter', system-ui, sans-serif;
   }
-  
+
   /* Typography Scaling */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply tracking-tight font-sans;
   }
 
@@ -130,7 +140,7 @@
   .glass {
     @apply bg-black/40 backdrop-blur-md border border-white/10;
   }
-  
+
   .glass-card {
     @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
   }
@@ -159,23 +169,29 @@
   .animate-in {
     animation: fadeIn 0.5s ease-out forwards;
   }
-  
+
   .animate-up {
     animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes fadeInUp {
-    from { 
-      opacity: 0; 
+    from {
+      opacity: 0;
       transform: translateY(20px);
     }
-    to { 
-      opacity: 1; 
+
+    to {
+      opacity: 1;
       transform: translateY(0);
     }
   }

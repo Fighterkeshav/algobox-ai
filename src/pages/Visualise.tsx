@@ -42,6 +42,7 @@ import { VisualizationCanvas } from "@/components/visualisation/VisualizationCan
 import { DetailedNotesPanel } from "@/components/visualisation/DetailedNotesPanel";
 import { PresentationMode } from "@/components/visualisation/PresentationMode";
 import { MonitorPlay } from "lucide-react";
+import { ALGORITHM_DETAILS } from "@/lib/algorithms/algorithmDetails";
 
 type Algorithm =
   | "bubble-sort"
@@ -804,6 +805,7 @@ export default function Visualise() {
   const [speed, setSpeed] = useState(500);
   const [inputArray, setInputArray] = useState("64, 34, 25, 12, 22, 11, 90");
   const [searchTarget, setSearchTarget] = useState("25");
+  const [paramValue, setParamValue] = useState("8");
 
   // SQL State
   const [sqlQuery, setSqlQuery] = useState("SELECT * FROM users WHERE active = true;");
@@ -845,10 +847,10 @@ export default function Visualise() {
         break;
       case "n-queen":
         // Use paramValue or default 8
-        newSteps = generateNQueenSteps(paramValue || 8);
+        newSteps = generateNQueenSteps(parseInt(paramValue) || 8);
         break;
       case "sieve":
-        newSteps = generateSieveSteps(paramValue || 50);
+        newSteps = generateSieveSteps(parseInt(paramValue) || 50);
         break;
     }
 
@@ -1004,6 +1006,19 @@ export default function Visualise() {
                   </div>
                 )}
 
+                {(algorithm === "n-queen" || algorithm === "sieve") && (
+                  <div className="space-y-2">
+                    <Label>{algorithm === "n-queen" ? "Board Size (N)" : "Limit (N)"}</Label>
+                    <Input
+                      value={paramValue}
+                      onChange={(e) => setParamValue(e.target.value)}
+                      placeholder={algorithm === "n-queen" ? "e.g. 8" : "e.g. 50"}
+                      type="number"
+                      min="1"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>Speed: {speed}ms</Label>
                   <Slider
@@ -1085,14 +1100,30 @@ export default function Visualise() {
             </Card>
 
             <Card className="lg:col-span-2 flex flex-col">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Visualization</CardTitle>
-                  {currentStepData && (
-                    <Badge variant={currentStepData.type === "done" ? "default" : "secondary"}>
-                      {currentStepData.type}
-                    </Badge>
-                  )}
+              <CardHeader className="border-b border-border/50 pb-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl font-mono mb-1">{ALGORITHM_DETAILS[algorithm as AlgorithmId].name}</CardTitle>
+                      <p className="text-sm text-muted-foreground font-mono">{ALGORITHM_DETAILS[algorithm as AlgorithmId].summary}</p>
+                    </div>
+                    {currentStepData && (
+                      <Badge variant={currentStepData.type === "done" ? "default" : "secondary"} className="font-mono">
+                        {currentStepData.type}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-md border border-border/50">
+                      <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Time</span>
+                      <span className="text-sm font-mono text-blue-400 font-bold">{ALGORITHM_DETAILS[algorithm as AlgorithmId].complexity.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-md border border-border/50">
+                      <span className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Space</span>
+                      <span className="text-sm font-mono text-purple-400 font-bold">{ALGORITHM_DETAILS[algorithm as AlgorithmId].complexity.space}</span>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">

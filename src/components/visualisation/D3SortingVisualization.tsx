@@ -40,18 +40,19 @@ export function D3SortingVisualization({ step, algorithm }: D3SortingVisualizati
       .range([chartHeight, 0]);
 
     const getBarColor = (index: number) => {
-      if (sorted.includes(index)) return "#22c55e";
-      if (comparing.includes(index)) return "#eab308";
-      if (merging.length > 0 && merging.includes(array[index])) return "#3b82f6";
+      if (sorted.includes(index)) return "#ef4444"; // Red for sorted/active elements (based on screenshot)
+      if (comparing.includes(index)) return "#ef4444"; // Red for comparing
+      if (merging.length > 0 && merging.includes(array[index])) return "#ef4444";
 
       if (algorithm === "quick-sort") {
         if (index === pivot) return "#ef4444";
-        if (index === i) return "#8b5cf6";
-        if (index === j) return "#ec4899";
-        if (low !== undefined && high !== undefined && index >= low && index <= high) return "#60a5fa";
+        if (index === i) return "#ef4444";
+        if (index === j) return "#ef4444";
+        if (low !== undefined && high !== undefined && index >= low && index <= high) return "#ef4444";
       }
 
-      return "#6366f1";
+      // Default bars are grey as per screenshot
+      return "#a3a3a3";
     };
 
     const bars = g.selectAll(".bar")
@@ -67,7 +68,7 @@ export function D3SortingVisualization({ step, algorithm }: D3SortingVisualizati
       .attr("width", xScale.bandwidth())
       .attr("rx", 4)
       .style("fill", (d: any, i: number) => getBarColor(i))
-      .style("opacity", 0.9)
+      .style("opacity", 1) // Solid bars
       .transition()
       .duration(300)
       .ease(d3.easeCubicOut)
@@ -79,7 +80,7 @@ export function D3SortingVisualization({ step, algorithm }: D3SortingVisualizati
       .attr("x", xScale.bandwidth() / 2)
       .attr("y", chartHeight + 20)
       .attr("text-anchor", "middle")
-      .style("fill", "#94a3b8")
+      .style("fill", "#ffffff") // White text
       .style("font-size", "12px")
       .style("font-weight", "600")
       .style("font-family", "'JetBrains Mono', monospace")
@@ -95,7 +96,7 @@ export function D3SortingVisualization({ step, algorithm }: D3SortingVisualizati
       .attr("x", xScale.bandwidth() / 2)
       .attr("y", chartHeight + 38)
       .attr("text-anchor", "middle")
-      .style("fill", "#64748b")
+      .style("fill", "#525252") // Darker grey for indices
       .style("font-size", "10px")
       .style("font-family", "'JetBrains Mono', monospace")
       .text((d: any, i: number) => i)
@@ -129,9 +130,8 @@ export function D3SortingVisualization({ step, algorithm }: D3SortingVisualizati
       .attr("transform", `translate(0, -30)`);
 
     const legendData = [
-      { label: "Sorted", color: "#22c55e", show: sorted.length > 0 },
-      { label: "Comparing", color: "#eab308", show: comparing.length > 0 },
-      { label: "Active", color: "#6366f1", show: true },
+      { label: "Sorted/Active", color: "#ef4444", show: true },
+      { label: "Inactive", color: "#a3a3a3", show: true },
     ];
 
     legendData.filter(d => d.show).forEach((item, i) => {

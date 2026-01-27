@@ -29,6 +29,7 @@ import { DashboardLayout } from "./components/DashboardLayout";
 import { AnalyticsListener } from "./components/AnalyticsListener";
 import { FloatingActionButtons } from "./components/FloatingActionButtons";
 import { GlobalLoader } from "./components/GlobalLoader";
+import { GridBackground } from "@/components/ui/GridBackground";
 import { useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -56,42 +57,44 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AnalyticsListener />
-          <GlobalLoader />
-          <FloatingActionButtons />
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }>
-              {/* Overview */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/roadmap" element={<Roadmap />} />
-              {/* Learn */}
-              <Route path="/patterns" element={<Patterns />} />
-              <Route path="/patterns/:patternId" element={<PatternDetail />} />
-              <Route path="/algorithm-picker" element={<AlgorithmPicker />} />
-              <Route path="/cheat-sheets" element={<CheatSheets />} />
-              <Route path="/visualise" element={<Visualise />} />
-              {/* Practice */}
-              <Route path="/practice" element={<Practice />} />
-              <Route path="/cyber-lab" element={<CyberLab />} />
-              {/* Compete */}
-              <Route path="/battle" element={<BattleMode />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              {/* Track */}
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/community/:questionId" element={<QuestionDetail />} />
-              <Route path="/notes" element={<Notes />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <GridBackground>
+            <AnalyticsListener />
+            <GlobalLoader />
+            <FloatingActionButtons />
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }>
+                {/* Overview */}
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/roadmap" element={<Roadmap />} />
+                {/* Learn */}
+                <Route path="/patterns" element={<Patterns />} />
+                <Route path="/patterns/:patternId" element={<PatternDetail />} />
+                <Route path="/algorithm-picker" element={<AlgorithmPicker />} />
+                <Route path="/cheat-sheets" element={<CheatSheets />} />
+                <Route path="/visualise" element={<Visualise />} />
+                {/* Practice */}
+                <Route path="/practice" element={<Practice />} />
+                <Route path="/cyber-lab" element={<CyberLab />} />
+                {/* Compete */}
+                <Route path="/battle" element={<BattleMode />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                {/* Track */}
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/community/:questionId" element={<QuestionDetail />} />
+                <Route path="/notes" element={<Notes />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </GridBackground>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
