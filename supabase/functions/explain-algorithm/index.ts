@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,21 @@ serve(async (req) => {
   }
 
   try {
+    const rateLimit = enforceRateLimit(req, "explain-algorithm");
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter),
+          },
+        },
+      );
+    }
+
     const { algorithm, step, stepType, description, code } = await req.json();
 
     const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
@@ -18,14 +34,15 @@ serve(async (req) => {
       throw new Error("GROQ_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert algorithm teacher. Your job is to explain algorithm steps in a clear, educational way.
+    const systemPrompt = `You are an expert algorithm teacher. Explain only what the current step is doing and why it matters.
 
 Guidelines:
-- Keep explanations concise (2-3 sentences max)
+- Keep explanations concise (max 2 short sentences)
 - Use simple language that beginners can understand
 - Relate the step to the overall algorithm goal
 - If there's code context, reference specific lines
-- Be encouraging and helpful`;
+- Be encouraging and helpful
+- Do not add unrelated advice or extra sections`;
 
     const userPrompt = `Explain this step in the ${algorithm} algorithm:
 

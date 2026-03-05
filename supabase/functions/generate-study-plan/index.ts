@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,21 @@ serve(async (req) => {
     }
 
     try {
+        const rateLimit = enforceRateLimit(req, "generate-study-plan");
+        if (!rateLimit.allowed) {
+            return new Response(
+                JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
+                {
+                    status: 429,
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type": "application/json",
+                        "Retry-After": String(rateLimit.retryAfter),
+                    },
+                },
+            );
+        }
+
         const supabase = createClient(
             Deno.env.get("SUPABASE_URL") ?? "",
             Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -56,11 +72,9 @@ serve(async (req) => {
     RULES:
     1. Create 3-4 High Level Modules (e.g., "Foundations", "Data Structures", "Advanced Algorithms").
     2. Inside them, create sub-nodes.
-    3. TAILOR it to the user.
-       - IF they solved 'Two Sum' (Arrays), suggest 'Sliding Window' next.
-       - IF they are brand new, recommend 'Variables' and 'Loops'.
-       - IF they solved 'Linked Lists', suggest 'Trees'.
-    4. Return ONLY the JSON. No Markdown. No comments.
+    3. Tailor it to the user and prioritize gaps in fundamentals before advanced topics.
+    4. Keep descriptions concise and practical.
+    5. Return ONLY valid JSON. No markdown, no comments, no extra text.
     `;
 
         const userPrompt = `Generate a study plan for a user at "${level}" level.
