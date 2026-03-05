@@ -6,63 +6,52 @@
 
 @layer base {
   :root {
-    /* Obsidian / Deep Space Theme */
-    /* Retro Grid Theme */
-    --background: 0 0% 2%;
-    /* #050505 */
-    --foreground: 210 40% 98%;
+    /* Midnight Indigo Theme */
+    --background: 224 47% 7%;
+    --foreground: 210 33% 96%;
 
-    --card: 0 0% 4%;
-    /* #0a0a0a */
-    --card-foreground: 210 40% 98%;
+    --card: 224 35% 12%;
+    --card-foreground: 210 33% 96%;
 
-    --popover: 0 0% 4%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 224 35% 12%;
+    --popover-foreground: 210 33% 96%;
 
-    /* Neon Red Primary */
-    --primary: 0 84% 60%;
-    /* #ef4444 */
-    --primary-foreground: 0 0% 100%;
+    --primary: 258 90% 66%;
+    --primary-foreground: 240 100% 99%;
 
-    --secondary: 0 0% 10%;
-    /* #1a1a1a */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 223 27% 18%;
+    --secondary-foreground: 210 33% 96%;
 
-    --muted: 0 0% 15%;
-    /* #262626 */
-    --muted-foreground: 0 0% 64%;
-    /* #a3a3a3 */
+    --muted: 223 24% 22%;
+    --muted-foreground: 220 13% 71%;
 
-    --accent: 217 91% 60%;
-    /* #3b82f6 Blue */
-    --accent-foreground: 0 0% 100%;
+    --accent: 191 85% 55%;
+    --accent-foreground: 224 47% 7%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 78% 63%;
+    --destructive-foreground: 240 100% 99%;
 
-    --border: 0 0% 15%;
-    /* #262626 */
-    --input: 0 0% 15%;
-    --ring: 0 84% 60%;
+    --border: 223 23% 26%;
+    --input: 223 23% 26%;
+    --ring: 258 90% 66%;
 
-    --radius: 0px;
-    /* Sharp corners for retro feel */
+    --radius: 0.75rem;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 3%;
-    --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 0 84% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 84% 60%;
+    --sidebar-background: 224 40% 9%;
+    --sidebar-foreground: 210 33% 96%;
+    --sidebar-primary: 258 90% 66%;
+    --sidebar-primary-foreground: 240 100% 99%;
+    --sidebar-accent: 223 27% 18%;
+    --sidebar-accent-foreground: 210 33% 96%;
+    --sidebar-border: 223 23% 26%;
+    --sidebar-ring: 258 90% 66%;
 
     /* Custom Surface Tokens */
-    --surface-elevated: 0 0% 5%;
-    --surface-overlay: 0 0% 4%;
-    --code-bg: 0 0% 2%;
-    --code-border: 0 0% 15%;
+    --surface-elevated: 224 35% 14%;
+    --surface-overlay: 224 35% 12%;
+    --code-bg: 224 47% 8%;
+    --code-border: 223 23% 26%;
   }
 
   .light {
