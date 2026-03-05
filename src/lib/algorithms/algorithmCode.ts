@@ -4,10 +4,13 @@ export type AlgorithmId =
     | "merge-sort"
     | "insertion-sort"
     | "selection-sort"
+    | "heap-sort"
     | "binary-search"
     | "dijkstra"
     | "a-star"
     | "bfs"
+    | "dfs"
+    | "kruskal"
     | "n-queen"
     | "sieve";
 
@@ -108,6 +111,33 @@ def merge(left, right):
         arr[i], arr[min_idx] = arr[min_idx], arr[i]
     return arr`,
     },
+    "heap-sort": {
+        name: "Heap Sort",
+        language: "python",
+        lineCount: 19,
+        code: `def heapify(arr, n, i):
+    largest = i
+    l = 2 * i + 1
+    r = 2 * i + 2
+    if l < n and arr[l] > arr[largest]:
+        largest = l
+    if r < n and arr[r] > arr[largest]:
+        largest = r
+    if largest != i:
+        arr[i], arr[largest] = arr[largest], arr[i]
+        heapify(arr, n, largest)
+
+def heap_sort(arr):
+    n = len(arr)
+    # Build a maxheap.
+    for i in range(n // 2 - 1, -1, -1):
+        heapify(arr, n, i)
+    # Extract elements one by one
+    for i in range(n - 1, 0, -1):
+        arr[i], arr[0] = arr[0], arr[i]
+        heapify(arr, i, 0)
+    return arr`,
+    },
     "binary-search": {
         name: "Binary Search",
         language: "python",
@@ -205,6 +235,69 @@ def merge(left, right):
     
     return None  # No path found`,
     },
+    "dfs": {
+        name: "Depth-First Search",
+        language: "python",
+        lineCount: 16,
+        code: `def dfs(grid, start, end):
+    stack = [start]
+    visited = {start}
+    parent = {}
+    
+    while stack:
+        current = stack.pop()
+        
+        if current == end:
+            return reconstruct_path(parent, end)
+        
+        for neighbor in get_neighbors(current, grid):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                parent[neighbor] = current
+                stack.append(neighbor)
+                
+    return None  # No path found`,
+    },
+    "kruskal": {
+        name: "Kruskal's Algorithm",
+        language: "python",
+        lineCount: 33,
+        code: `def find(parent, i):
+    if parent[i] == i:
+        return i
+    return find(parent, parent[i])
+
+def union(parent, rank, x, y):
+    xroot = find(parent, x)
+    yroot = find(parent, y)
+    if rank[xroot] < rank[yroot]:
+        parent[xroot] = yroot
+    elif rank[xroot] > rank[yroot]:
+        parent[yroot] = xroot
+    else:
+        parent[yroot] = xroot
+        rank[xroot] += 1
+
+def kruskal(graph_edges, num_nodes):
+    result = []
+    edges = sorted(graph_edges, key=lambda item: item[2])
+    parent = [i for i in range(num_nodes)]
+    rank = [0] * num_nodes
+    
+    e = 0
+    for u, v, w in edges:
+        if e == num_nodes - 1:
+            break
+        x = find(parent, u)
+        y = find(parent, v)
+        
+        if x != y:
+            e += 1
+            result.append([u, v, w])
+            union(parent, rank, x, y)
+            
+    return result`,
+    },
     "n-queen": {
         name: "N-Queens",
         language: "python",
@@ -297,6 +390,15 @@ export const STEP_LINE_MAPPING: Record<AlgorithmId, Record<string, number>> = {
         swap: 8,
         done: 9,
     },
+    "heap-sort": {
+        init: 1,
+        heapify: 16,
+        compare: 6,
+        swap: 11,
+        "swap-root": 19,
+        "heapify-root": 20,
+        done: 21,
+    },
     "binary-search": {
         init: 2,
         check: 5,
@@ -323,6 +425,20 @@ export const STEP_LINE_MAPPING: Record<AlgorithmId, Record<string, number>> = {
         enqueue: 13,
         done: 10,
         "no-path": 16,
+    },
+    dfs: {
+        init: 2,
+        visit: 7,
+        push: 13,
+        done: 10,
+        "no-path": 16,
+    },
+    kruskal: {
+        init: 19,
+        sort: 20,
+        find: 27,
+        union: 32,
+        done: 34,
     },
     "n-queen": {
         init: 2,

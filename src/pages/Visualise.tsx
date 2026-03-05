@@ -41,8 +41,18 @@ import type { AlgorithmId } from "@/lib/algorithms/algorithmCode";
 import { VisualizationCanvas } from "@/components/visualisation/VisualizationCanvas";
 import { DetailedNotesPanel } from "@/components/visualisation/DetailedNotesPanel";
 import { PresentationMode } from "@/components/visualisation/PresentationMode";
-import { MonitorPlay } from "lucide-react";
+import { MonitorPlay, Network } from "lucide-react";
 import { ALGORITHM_DETAILS } from "@/lib/algorithms/algorithmDetails";
+import { GraphInputEditor, type GraphData } from "@/components/visualisation/GraphInputEditor";
+import { ExportButton } from "@/components/visualisation/ExportButton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 type Algorithm =
   | "bubble-sort"
@@ -50,10 +60,13 @@ type Algorithm =
   | "merge-sort"
   | "insertion-sort"
   | "selection-sort"
+  | "heap-sort"
   | "binary-search"
   | "dijkstra"
   | "a-star"
   | "bfs"
+  | "dfs"
+  | "kruskal"
   | "n-queen"
   | "sieve";
 
@@ -70,10 +83,13 @@ const ALGORITHMS: { id: Algorithm; name: string; category: string }[] = [
   { id: "merge-sort", name: "Merge Sort", category: "Sorting" },
   { id: "insertion-sort", name: "Insertion Sort", category: "Sorting" },
   { id: "selection-sort", name: "Selection Sort", category: "Sorting" },
+  { id: "heap-sort", name: "Heap Sort", category: "Sorting" },
   { id: "binary-search", name: "Binary Search", category: "Searching" },
   { id: "dijkstra", name: "Dijkstra's Algorithm", category: "Graph" },
   { id: "a-star", name: "A* Pathfinding", category: "Graph" },
   { id: "bfs", name: "Breadth-First Search", category: "Graph" },
+  { id: "dfs", name: "Depth-First Search", category: "Graph" },
+  { id: "kruskal", name: "Kruskal's Algorithm", category: "Graph" },
   { id: "n-queen", name: "N-Queens", category: "Backtracking" },
   { id: "sieve", name: "Sieve of Eratosthenes", category: "Math" },
 ];
@@ -197,6 +213,103 @@ function generateSelectionSortSteps(arr: number[]): AlgoStep[] {
   return steps;
 }
 
+function generateHeapSortSteps(arr: number[]): AlgoStep[] {
+  const steps: AlgoStep[] = [];
+  const array = [...arr];
+  const n = array.length;
+
+  steps.push({
+    index: 0,
+    type: "init",
+    state: { array: [...array], comparing: [], sorted: [], highlighted: [] },
+    description: `Starting Heap Sort with array: [${array.join(", ")}]`
+  });
+
+  const heapify = (arr: number[], n: number, i: number, sortedIndices: number[]) => {
+    let largest = i;
+    const l = 2 * i + 1;
+    const r = 2 * i + 2;
+
+    steps.push({
+      index: steps.length,
+      type: "heapify",
+      state: { array: [...arr], comparing: [i], sorted: [...sortedIndices], highlighted: [i] },
+      description: `Heapifying subtree rooted at index ${i}`
+    });
+
+    if (l < n) {
+      steps.push({
+        index: steps.length,
+        type: "compare",
+        state: { array: [...arr], comparing: [largest, l], sorted: [...sortedIndices], highlighted: [l] },
+        description: `Comparing root ${arr[largest]} with left child ${arr[l]}`
+      });
+      if (arr[l] > arr[largest]) {
+        largest = l;
+      }
+    }
+
+    if (r < n) {
+      steps.push({
+        index: steps.length,
+        type: "compare",
+        state: { array: [...arr], comparing: [largest, r], sorted: [...sortedIndices], highlighted: [r] },
+        description: `Comparing max so far ${arr[largest]} with right child ${arr[r]}`
+      });
+      if (arr[r] > arr[largest]) {
+        largest = r;
+      }
+    }
+
+    if (largest !== i) {
+      steps.push({
+        index: steps.length,
+        type: "swap",
+        state: { array: [...arr], comparing: [i, largest], sorted: [...sortedIndices], highlighted: [] },
+        description: `Swapping ${arr[i]} and ${arr[largest]}`
+      });
+      [arr[i], arr[largest]] = [arr[largest], arr[i]];
+      heapify(arr, n, largest, sortedIndices);
+    }
+  };
+
+  // Build max heap
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    heapify(array, n, i, []);
+  }
+
+  // Extract elements from heap one by one
+  const sorted: number[] = [];
+  for (let i = n - 1; i > 0; i--) {
+    steps.push({
+      index: steps.length,
+      type: "swap-root",
+      state: { array: [...array], comparing: [0, i], sorted: [...sorted], highlighted: [0] },
+      description: `Moving max element ${array[0]} to the end of the array (index ${i})`
+    });
+    [array[0], array[i]] = [array[i], array[0]];
+    sorted.push(i);
+
+    steps.push({
+      index: steps.length,
+      type: "heapify-root",
+      state: { array: [...array], comparing: [], sorted: [...sorted], highlighted: [0] },
+      description: `Heapifying root element at index 0`
+    });
+    heapify(array, i, 0, sorted);
+  }
+  sorted.push(0);
+
+  steps.push({
+    index: steps.length,
+    type: "done",
+    state: { array: [...array], comparing: [], sorted: Array.from({ length: n }, (_, i) => i), highlighted: [] },
+    description: `Sorting complete!`
+  });
+
+  return steps;
+}
+
 function generateBFSSteps(): AlgoStep[] {
   const steps: AlgoStep[] = [];
   const rows = 6;
@@ -293,6 +406,230 @@ function generateBFSSteps(): AlgoStep[] {
     type: "no-path",
     state: { grid, start, end, openSet: [], closedSet: [...Array.from(visited).map(s => { const [x, y] = s.split(','); return { x: +x, y: +y } })], path: [], current: null },
     description: "No path found!"
+  });
+
+  return steps;
+}
+
+function generateDFSSteps(): AlgoStep[] {
+  const steps: AlgoStep[] = [];
+  const rows = 6;
+  const cols = 8;
+  const grid: number[][] = Array(rows).fill(null).map(() => Array(cols).fill(0));
+  grid[1][2] = 1;
+  grid[2][2] = 1;
+  grid[3][2] = 1;
+  grid[3][3] = 1;
+  grid[1][5] = 1;
+  grid[2][5] = 1;
+
+  const start = { x: 0, y: 2 };
+  const end = { x: 7, y: 3 };
+
+  const stack: { x: number, y: number }[] = [start];
+  const visited = new Set<string>();
+  visited.add(`${start.x},${start.y}`);
+
+  steps.push({
+    index: 0,
+    type: "init",
+    state: { grid, start, end, openSet: [...stack], closedSet: [], path: [], current: null },
+    description: "Initialize DFS - Depth-First Search"
+  });
+
+  const parentMap = new Map<string, { x: number, y: number }>();
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+
+    steps.push({
+      index: steps.length,
+      type: "visit",
+      state: {
+        grid, start, end,
+        openSet: stack.map(n => ({ x: n.x, y: n.y })),
+        closedSet: Array.from(visited).map(s => { const [x, y] = s.split(','); return { x: +x, y: +y } }),
+        path: [], current
+      },
+      description: `Visiting (${current.x}, ${current.y})`
+    });
+
+    if (current.x === end.x && current.y === end.y) {
+      const path = [];
+      let currStr = `${end.x},${end.y}`;
+      while (currStr) {
+        const posParts = currStr.split(',');
+        const pos = { x: parseInt(posParts[0]), y: parseInt(posParts[1]) };
+        path.unshift(pos);
+        const par = parentMap.get(currStr);
+        currStr = par ? `${par.x},${par.y}` : "";
+      }
+
+      steps.push({
+        index: steps.length,
+        type: "done",
+        state: { grid, start, end, openSet: [], closedSet: [...Array.from(visited).map(s => { const [x, y] = s.split(','); return { x: +x, y: +y } })], path, current: null },
+        description: "Path found!"
+      });
+      return steps;
+    }
+
+    const directions = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // Top, Right, Bottom, Left. Stack is LIFO, so last added is explored first
+    for (const [dx, dy] of directions) {
+      const nx = current.x + dx;
+      const ny = current.y + dy;
+
+      if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && grid[ny][nx] !== 1) {
+        const key = `${nx},${ny}`;
+        if (!visited.has(key)) {
+          visited.add(key);
+          parentMap.set(key, current);
+          stack.push({ x: nx, y: ny });
+
+          steps.push({
+            index: steps.length,
+            type: "push",
+            state: {
+              grid, start, end,
+              openSet: stack.map(n => ({ x: n.x, y: n.y })),
+              closedSet: Array.from(visited).map(s => { const [x, y] = s.split(','); return { x: +x, y: +y } }),
+              path: [], current, adding: { x: nx, y: ny }
+            },
+            description: `Pushing neighbor (${nx}, ${ny}) to stack`
+          });
+        }
+      }
+    }
+  }
+
+  steps.push({
+    index: steps.length,
+    type: "no-path",
+    state: { grid, start, end, openSet: [], closedSet: [...Array.from(visited).map(s => { const [x, y] = s.split(','); return { x: +x, y: +y } })], path: [], current: null },
+    description: "No path found!"
+  });
+
+  return steps;
+}
+
+function generateKruskalSteps(customGraph: GraphData | null): AlgoStep[] {
+  const steps: AlgoStep[] = [];
+
+  // Custom graph for Kruskal's (fallback if no custom graph provided)
+  const fallbackNumNodes = 6;
+  const fallbackNodes = [
+    { id: 0, x: 100, y: 100 },
+    { id: 1, x: 300, y: 100 },
+    { id: 2, x: 100, y: 300 },
+    { id: 3, x: 300, y: 300 },
+    { id: 4, x: 500, y: 200 },
+    { id: 5, x: 200, y: 400 },
+  ];
+
+  // [u, v, weight]
+  const fallbackGraphEdges = [
+    [0, 1, 4],
+    [0, 2, 4],
+    [1, 2, 2],
+    [1, 3, 5],
+    [1, 4, 10],
+    [2, 3, 5],
+    [2, 5, 8],
+    [3, 4, 3],
+    [3, 5, 1],
+  ];
+
+  // Use customGraph if valid, else fallback
+  const isCustomValid = customGraph !== null && customGraph.nodes.length > 0;
+  const numNodes = isCustomValid ? customGraph.nodes.length : fallbackNumNodes;
+  const nodes = isCustomValid ? customGraph.nodes : fallbackNodes;
+
+  // Base raw edges
+  const rawEdges = isCustomValid ? customGraph.edges : fallbackGraphEdges.map(e => ({ u: e[0], v: e[1], w: e[2] }));
+
+  // Transform rawEdges to an array-based format for internal sorting [u, v, w]
+  const graphEdges = rawEdges.map(e => [e.u, e.v, e.w]);
+
+  steps.push({
+    index: 0,
+    type: "init",
+    state: { nodes, edges: graphEdges, mstEdges: [], currentEdge: null, sortedEdges: [] },
+    description: "Initialize Kruskal's Algorithm with a weighted graph."
+  });
+
+  // Sort edges by weight
+  const edges = [...graphEdges].sort((a, b) => a[2] - b[2]);
+
+  steps.push({
+    index: steps.length,
+    type: "sort",
+    state: { nodes, edges: graphEdges, mstEdges: [], currentEdge: null, sortedEdges: edges.map(e => [...e]) },
+    description: "Sort all edges by weight in ascending order."
+  });
+
+  const parent = Array.from({ length: numNodes }, (_, i) => i);
+  const rank = Array(numNodes).fill(0);
+
+  const find = (i: number): number => {
+    if (parent[i] === i) return i;
+    return (parent[i] = find(parent[i]));
+  };
+
+  const union = (x: number, y: number) => {
+    const xroot = find(x);
+    const yroot = find(y);
+    if (rank[xroot] < rank[yroot]) {
+      parent[xroot] = yroot;
+    } else if (rank[xroot] > rank[yroot]) {
+      parent[yroot] = xroot;
+    } else {
+      parent[yroot] = xroot;
+      rank[xroot]++;
+    }
+  };
+
+  const resultEdges: number[][] = [];
+  let e = 0;
+
+  for (const [u, v, w] of edges) {
+    if (e === numNodes - 1) break;
+
+    steps.push({
+      index: steps.length,
+      type: "find",
+      state: { nodes, edges: graphEdges, mstEdges: [...resultEdges], currentEdge: [u, v, w], sortedEdges: edges.map(e => [...e]) },
+      description: `Considering edge (${u}, ${v}) with weight ${w}. Checking for cycles...`
+    });
+
+    const x = find(u);
+    const y = find(v);
+
+    if (x !== y) {
+      e++;
+      resultEdges.push([u, v, w]);
+      union(x, y);
+
+      steps.push({
+        index: steps.length,
+        type: "union",
+        state: { nodes, edges: graphEdges, mstEdges: [...resultEdges], currentEdge: null, sortedEdges: edges.map(e => [...e]) },
+        description: `No cycle formed. Edge (${u}, ${v}) added to MST.`
+      });
+    } else {
+      steps.push({
+        index: steps.length,
+        type: "cycle",
+        state: { nodes, edges: graphEdges, mstEdges: [...resultEdges], currentEdge: [u, v, w], sortedEdges: edges.map(e => [...e]) },
+        description: `Edge (${u}, ${v}) creates a cycle. Discarding.`
+      });
+    }
+  }
+
+  steps.push({
+    index: steps.length,
+    type: "done",
+    state: { nodes, edges: graphEdges, mstEdges: [...resultEdges], currentEdge: null, sortedEdges: edges.map(e => [...e]) },
+    description: `Minimum Spanning Tree found with ${resultEdges.length} edges!`
   });
 
   return steps;
@@ -813,6 +1150,10 @@ export default function Visualise() {
   const [isSqlLoading, setIsSqlLoading] = useState(false);
   const [isPresentationOpen, setIsPresentationOpen] = useState(false);
 
+  // Custom Graph State
+  const [customGraph, setCustomGraph] = useState<GraphData | null>(null);
+  const isGraphAlgo = ["dijkstra", "a-star", "bfs", "dfs", "kruskal"].includes(algorithm);
+
   const generateSteps = useCallback(() => {
     const arr = inputArray.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n));
 
@@ -842,8 +1183,17 @@ export default function Visualise() {
       case "selection-sort":
         newSteps = generateSelectionSortSteps(arr);
         break;
+      case "heap-sort":
+        newSteps = generateHeapSortSteps(arr);
+        break;
       case "bfs":
         newSteps = generateBFSSteps();
+        break;
+      case "dfs":
+        newSteps = generateDFSSteps();
+        break;
+      case "kruskal":
+        newSteps = generateKruskalSteps(customGraph);
         break;
       case "n-queen":
         // Use paramValue or default 8
@@ -1034,6 +1384,32 @@ export default function Visualise() {
                   Generate Steps
                 </Button>
 
+                {/* Custom Graph Input Button */}
+                {isGraphAlgo && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full mt-2 gap-2">
+                        <Network className="h-4 w-4" />
+                        Custom Graph Data
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl">
+                      <DialogHeader>
+                        <DialogTitle>Edit Graph Data</DialogTitle>
+                        <DialogDescription>
+                          Create your own custom nodes and edges for the algorithm. Changes are applied automatically.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="mt-4">
+                        <GraphInputEditor
+                          initialGraph={customGraph || { nodes: [], edges: [] }}
+                          onGraphChange={setCustomGraph}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
                 {/* Maze Generation Button */}
                 {["dijkstra", "a-star", "bfs"].includes(algorithm) && (
                   <Button
@@ -1107,11 +1483,20 @@ export default function Visualise() {
                       <CardTitle className="text-2xl font-mono mb-1">{ALGORITHM_DETAILS[algorithm as AlgorithmId].name}</CardTitle>
                       <p className="text-sm text-muted-foreground font-mono">{ALGORITHM_DETAILS[algorithm as AlgorithmId].summary}</p>
                     </div>
-                    {currentStepData && (
-                      <Badge variant={currentStepData.type === "done" ? "default" : "secondary"} className="font-mono">
-                        {currentStepData.type}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {currentStepData && (
+                        <Badge variant={currentStepData.type === "done" ? "default" : "secondary"} className="font-mono">
+                          {currentStepData.type}
+                        </Badge>
+                      )}
+                      <ExportButton
+                        targetId="visualization-canvas"
+                        algorithm={algorithm}
+                        currentStep={currentStep}
+                        totalSteps={steps.length}
+                        extraParams={{ arr: inputArray, target: searchTarget }}
+                      />
+                    </div>
                   </div>
 
                   <div className="flex gap-4">
@@ -1127,11 +1512,13 @@ export default function Visualise() {
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
-                <VisualizationCanvas
-                  algorithm={algorithm as AlgorithmId}
-                  currentStepData={currentStepData}
-                  height="500px"
-                />
+                <div id="visualization-canvas">
+                  <VisualizationCanvas
+                    algorithm={algorithm as AlgorithmId}
+                    currentStepData={currentStepData}
+                    height="500px"
+                  />
+                </div>
 
                 {currentStepData && (
                   <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-3">

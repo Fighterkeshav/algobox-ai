@@ -4,6 +4,7 @@ import { D3GraphVisualization } from "@/components/visualisation/D3GraphVisualiz
 import { D3GridVisualization } from "@/components/visualisation/D3GridVisualization";
 import { D3NQueenVisualization } from "@/components/visualisation/D3NQueenVisualization";
 import { D3PrimesVisualization } from "@/components/visualisation/D3PrimesVisualization";
+import { D3MSTVisualization } from "@/components/visualisation/D3MSTVisualization";
 import type { AlgorithmId } from "@/lib/algorithms/algorithmCode";
 
 interface VisualizationCanvasProps {
@@ -15,7 +16,7 @@ interface VisualizationCanvasProps {
 export function VisualizationCanvas({ algorithm, currentStepData, height = "500px" }: VisualizationCanvasProps) {
     if (!currentStepData) return null;
 
-    const isSortingAlgo = ["bubble-sort", "quick-sort", "merge-sort", "insertion-sort", "selection-sort"].includes(algorithm);
+    const isSortingAlgo = ["bubble-sort", "quick-sort", "merge-sort", "insertion-sort", "selection-sort", "heap-sort"].includes(algorithm);
     const isSearchAlgo = algorithm === "binary-search";
 
     return (
@@ -29,8 +30,11 @@ export function VisualizationCanvas({ algorithm, currentStepData, height = "500p
             {algorithm === "dijkstra" && (
                 <D3GraphVisualization step={currentStepData} />
             )}
-            {(algorithm === "a-star" || algorithm === "bfs") && (
+            {(algorithm === "a-star" || algorithm === "bfs" || algorithm === "dfs") && (
                 <D3GridVisualization step={currentStepData} />
+            )}
+            {algorithm === "kruskal" && (
+                <D3MSTVisualization step={currentStepData} />
             )}
             {algorithm === "n-queen" && (
                 <D3NQueenVisualization step={currentStepData} />

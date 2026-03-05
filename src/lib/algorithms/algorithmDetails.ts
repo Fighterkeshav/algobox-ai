@@ -544,4 +544,141 @@ If we reach a state where no queen can be placed in current row, we **backtrack*
             }
         ]
     },
+    "heap-sort": {
+        id: "heap-sort",
+        name: "Heap Sort",
+        summary: "A comparison-based sorting technique based on a Binary Heap data structure.",
+        complexity: {
+            time: "O(n log n)",
+            space: "O(1)",
+        },
+        pros: [
+            "In-place sorting algorithm",
+            "Guaranteed O(n log n) performance"
+        ],
+        cons: [
+            "Unstable sort",
+            "Often slower than well-implemented Quick Sort in practice"
+        ],
+        details: `
+### Heap Data Structure
+A Heap is a special Tree-based data structure that satisfies the heap property. In a Max Heap, for any given node I, the value of I is greater than or equal to the values of its children.
+
+### The Algorithm
+1. **Build Heap:** Rearrange the array into a max-heap.
+2. **Extract Elements:** Repeatedly swap the root (maximum value) with the last element of the heap, reduce the heap size by 1, and heapify the root of the tree to maintain the max-heap property.
+        `,
+        slides: [
+            {
+                title: "Introduction to Heaps",
+                content: "Heap Sort uses a binary heap. We visualize the array as a complete binary tree where each parent is larger than its children (Max Heap)."
+            },
+            {
+                title: "Heapify",
+                content: "The \`heapify\` process ensures a subtree satisfies the max-heap property by sinking smaller values down."
+            },
+            {
+                title: "Building the Heap",
+                content: "We start from the bottom (last non-leaf node) and heapify upwards until the whole array is a valid max heap. The largest element is now at the root (index 0)."
+            },
+            {
+                title: "Extraction",
+                content: "We swap the root (current max) with the last element, effectively 'locking' it in its final sorted position. Then we reduce the considered heap size."
+            },
+            {
+                title: "Re-Heapify",
+                content: "After the swap, the new root might violate the heap rule. We heapify the root downwards to restore the max-heap, bringing the next largest element to the top."
+            }
+        ]
+    },
+    "dfs": {
+        id: "dfs",
+        name: "Depth-First Search",
+        summary: "Algorithm that explores as far as possible along each branch before backtracking.",
+        complexity: {
+            time: "O(V + E)",
+            space: "O(V)",
+        },
+        pros: [
+            "Simple to implement using recursion or a stack",
+            "Memory efficient if the tree/graph is very deep but has low branching factor"
+        ],
+        cons: [
+            "Does not guarantee the shortest path",
+            "Can get stuck in infinite loops in graphs with cycles if visited states aren't tracked"
+        ],
+        details: `
+### Depth First Exploration
+DFS plunges deep into a graph, following a single path until it reaches a dead end. Unlike BFS, which searches level by level, DFS explores branch by branch.
+
+Using a **Stack** (LIFO) or recursion, DFS pushes a path's nodes onto the stack as it explores. When it can't go further, it pops nodes off until it finds an unexplored branch (backtracking).
+        `,
+        slides: [
+            {
+                title: "The Strategy",
+                content: "Imagine exploring a maze. You keep walking down a path until you hit a dead end, then you walk back to the last fork and try the other way. This is Depth-First Search."
+            },
+            {
+                title: "The Stack Data Structure",
+                content: "Instead of a Queue (BFS), DFS uses a Stack (Last-In-First-Out). We push neighbors onto the stack and explore the most recently added ones first."
+            },
+            {
+                title: "Going Deep",
+                content: "Because of the stack, DFS constantly dives deeper into newly discovered nodes rather than exploring its immediate neighborhood."
+            },
+            {
+                title: "Backtracking",
+                content: "When a node has no unvisited neighbors (a dead end), DFS pops it off the stack, effectively 'stepping back' to explore alternate routes."
+            }
+        ]
+    },
+    "kruskal": {
+        id: "kruskal",
+        name: "Kruskal's Algorithm",
+        summary: "Finds a minimum spanning forest of an undirected edge-weighted graph.",
+        complexity: {
+            time: "O(E log E)",
+            space: "O(V + E)",
+        },
+        pros: [
+            "Conceptually very simple (sort and join)",
+            "Excellent for sparse graphs"
+        ],
+        cons: [
+            "Requires sorting all edges first",
+            "Slower on dense graphs compared to Prim's Algorithm"
+        ],
+        details: `
+### Minimum Spanning Tree
+Kruskal's algorithm finds an MST: a subset of edges that connects all vertices together without any cycles, minimizing the total edge weight.
+
+### Union-Find (Disjoint Set)
+The algorithm uses a Union-Find data structure to efficiently check if adding an edge will create a cycle.
+1. Sort all edges by weight.
+2. Iterate through edges from lightest to heaviest.
+3. If the edge connects two disjoint trees, add it to the MST and \`Union\` the trees.
+        `,
+        slides: [
+            {
+                title: "The Problem",
+                content: "Given a network of connected points with associated costs (weights), connect them all together in the cheapest way possible without forming any closed loops (cycles)."
+            },
+            {
+                title: "Sort Every Edge",
+                content: "Kruskal's is a greedy algorithm. It starts by gathering every single edge in the graph and sorting them from the cheapest to the most expensive."
+            },
+            {
+                title: "Pick the Cheapest",
+                content: "We look at the sorted list. At every step, we pick the absolute cheapest available edge and try to add it to our solution."
+            },
+            {
+                title: "Cycle Checking",
+                content: "Before officially adding the edge, we check: Does this connect two points that are ALREADY connected by a path? If yes, it forms a cycle. We discard it and move to the next edge."
+            },
+            {
+                title: "Union-Find",
+                content: "We use a fast 'Union-Find' system to keep track of which points belong to which connected cluster. When we add an edge, we 'Union' their clusters."
+            }
+        ]
+    }
 };

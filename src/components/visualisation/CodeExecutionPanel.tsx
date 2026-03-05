@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,11 +29,23 @@ export function CodeExecutionPanel({
     const algorithmInfo = ALGORITHM_CODE[algorithm];
     const lineMapping = STEP_LINE_MAPPING[algorithm];
 
+    const currentLineRef = useRef<HTMLDivElement>(null);
+
     // Get the current highlighted line based on step type
     const currentLine = useMemo(() => {
         if (!currentStep) return 0;
         return lineMapping[currentStep.type] || 0;
     }, [currentStep, lineMapping]);
+
+    // Auto-scroll to the highlighted line when it changes
+    useEffect(() => {
+        if (currentLineRef.current) {
+            currentLineRef.current.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }
+    }, [currentLine]);
 
     // Extract variables from step state
     const variables = useMemo(() => {
@@ -170,10 +182,11 @@ export function CodeExecutionPanel({
                                 return (
                                     <div
                                         key={index}
+                                        ref={isCurrentLine ? currentLineRef : null}
                                         className={`
-                      flex items-stretch transition-colors duration-200
+                      flex items-stretch transition-all duration-300
                       ${isCurrentLine
-                                                ? "bg-emerald-500/20 border-l-2 border-emerald-400"
+                                                ? "bg-emerald-500/20 border-l-2 border-emerald-400 animate-[pulse_1s_ease-in-out]"
                                                 : isNextLine
                                                     ? "bg-amber-500/10 border-l-2 border-amber-400/50"
                                                     : "border-l-2 border-transparent hover:bg-muted/30"
