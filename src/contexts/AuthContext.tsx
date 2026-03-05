@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeEmail, sanitizeUsername } from "@/lib/authSecurity";
 
 interface AuthContextType {
     user: User | null;
@@ -82,11 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const signUp = async (email: string, password: string, username?: string) => {
+        const normalizedEmail = normalizeEmail(email);
+        const sanitizedUsername = sanitizeUsername(username);
+
         const { data, error } = await supabase.auth.signUp({
-            email,
+            email: normalizedEmail,
             password,
             options: {
-                data: { username },
+                data: { username: sanitizedUsername },
             },
         });
 
@@ -98,8 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     name: "user.signup",
                     data: {
                         userId: data.user.id,
-                        email: email,
-                        name: username || email.split('@')[0],
+                        email: normalizedEmail,
+                        name: sanitizedUsername || normalizedEmail.split('@')[0],
                     },
                 });
             } catch (e) {
@@ -112,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signIn = async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({
-            email,
+            email: normalizeEmail(email),
             password,
         });
         return { error };

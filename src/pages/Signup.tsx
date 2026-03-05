@@ -7,11 +7,19 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react";
+import { IconBrandGoogle } from "@tabler/icons-react";
+import {
+    isValidEmail,
+    mapAuthErrorMessage,
+    normalizeEmail,
+    sanitizeUsername,
+    validatePasswordStrength,
+} from "@/lib/authSecurity";
 
 export default function Signup() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(false);
     const { signUp, signInWithGoogle } = useAuth();
@@ -19,17 +27,32 @@ export default function Signup() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (password.length < 6) {
-            toast.error("Password must be at least 6 characters");
+
+        const normalizedEmail = normalizeEmail(email);
+        if (!isValidEmail(normalizedEmail)) {
+            toast.error("Please enter a valid email address.");
             return;
         }
 
+        if (password !== confirmPassword) {
+            toast.error("Passwords do not match.");
+            return;
+        }
+
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.valid) {
+            toast.error("Use 8+ chars with uppercase, lowercase, number, and symbol.");
+            return;
+        }
+
+        const cleanedUsername = sanitizeUsername(username);
+
         setLoading(true);
-        const { error } = await signUp(email, password, username);
+        const { error } = await signUp(normalizedEmail, password, cleanedUsername);
         setLoading(false);
 
         if (error) {
-            toast.error(error.message);
+            toast.error(mapAuthErrorMessage(error.message));
         } else {
             toast.success("Account created! Check your email to verify.");
             navigate("/login");
@@ -88,10 +111,24 @@ export default function Signup() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            minLength={6}
+                            minLength={8}
                             className="h-9 sm:h-10 text-sm"
                         />
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">At least 6 characters</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">8+ chars with upper/lowercase, number, symbol</p>
+                    </LabelInputContainer>
+
+                    <LabelInputContainer className="mb-6 sm:mb-8">
+                        <Label htmlFor="confirmPassword" className="text-xs sm:text-sm">Confirm Password</Label>
+                        <Input
+                            id="confirmPassword"
+                            placeholder="••••••••"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                            minLength={8}
+                            className="h-9 sm:h-10 text-sm"
+                        />
                     </LabelInputContainer>
 
                     <button

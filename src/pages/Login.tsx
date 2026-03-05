@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,15 @@ import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { IconBrandGoogle } from "@tabler/icons-react";
+import {
+    formatBlockTime,
+    getLoginBlockRemainingMs,
+    isValidEmail,
+    mapAuthErrorMessage,
+    normalizeEmail,
+    recordFailedLoginAttempt,
+    resetLoginRateLimit,
+} from "@/lib/authSecurity";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -15,18 +24,37 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const { signIn, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const redirectPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || "/dashboard";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const normalizedEmail = normalizeEmail(email);
+
+        if (!isValidEmail(normalizedEmail)) {
+            toast.error("Please enter a valid email address.");
+            return;
+        }
+
+        const blockRemainingMs = getLoginBlockRemainingMs(normalizedEmail);
+        if (blockRemainingMs > 0) {
+            toast.error(`Too many failed attempts. Try again in ${formatBlockTime(blockRemainingMs)}.`);
+            return;
+        }
+
         setLoading(true);
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(normalizedEmail, password);
         setLoading(false);
 
         if (error) {
-            toast.error(error.message);
+            recordFailedLoginAttempt(normalizedEmail);
+            toast.error(mapAuthErrorMessage(error.message));
         } else {
+            resetLoginRateLimit(normalizedEmail);
             toast.success("Logged in successfully!");
-            navigate("/dashboard");
+            navigate(redirectPath, { replace: true });
         }
     };
 
