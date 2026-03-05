@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PROBLEMS, Problem } from "@/lib/problems/problemLibrary";
+import { getCustomProblems } from "@/lib/adminContent";
 import { D3CodeVisualization } from "@/components/visualisation/D3CodeVisualization";
 import ReactMarkdown from "react-markdown";
 import {
@@ -37,6 +38,7 @@ const DIFFICULTY_CONFIG = {
 };
 
 export default function Practice() {
+  const allProblems = useMemo(() => [...getCustomProblems(), ...PROBLEMS], []);
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [language, setLanguage] = useState<Language>("javascript");
@@ -66,14 +68,14 @@ export default function Practice() {
   }, [selectedProblemId, getNoteForProblem]);
 
   const selectedProblem = useMemo(() =>
-    PROBLEMS.find(p => p.id === selectedProblemId) || null
-    , [selectedProblemId]);
+    allProblems.find(p => p.id === selectedProblemId) || null
+    , [selectedProblemId, allProblems]);
 
   const filteredProblems = useMemo(() => {
-    if (!searchQuery) return PROBLEMS;
+    if (!searchQuery) return allProblems;
     const q = searchQuery.toLowerCase();
-    return PROBLEMS.filter(p => p.title.toLowerCase().includes(q));
-  }, [searchQuery]);
+    return allProblems.filter(p => p.title.toLowerCase().includes(q));
+  }, [searchQuery, allProblems]);
 
   // Update openProblem to load saved code
   const openProblem = (problem: Problem) => {
@@ -234,7 +236,7 @@ export default function Practice() {
         <div className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
             <h1 className="text-base sm:text-lg font-semibold">Problem List</h1>
-            <span className="text-xs sm:text-sm text-muted-foreground">{getSolvedCount()}/{PROBLEMS.length} Solved</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">{getSolvedCount()}/{allProblems.length} Solved</span>
           </div>
         </div>
 
