@@ -25,6 +25,7 @@ import AlgorithmPicker from "./pages/AlgorithmPicker";
 import CheatSheets from "./pages/CheatSheets";
 import Community from "./pages/Community";
 import QuestionDetail from "./pages/QuestionDetail";
+import Admin from "./pages/Admin";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { AnalyticsListener } from "./components/AnalyticsListener";
 import { FloatingActionButtons } from "./components/FloatingActionButtons";
@@ -91,6 +92,7 @@ const App = () => (
                 <Route path="/community/:questionId" element={<QuestionDetail />} />
                 <Route path="/notes" element={<Notes />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/admin" element={<Admin />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -102,4 +104,3 @@ const App = () => (
 );
 
 export default App;
-

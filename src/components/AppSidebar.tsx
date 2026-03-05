@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/aceternity-sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { isAdminEmail } from "@/lib/admin";
 import {
   LayoutDashboard,
   Map,
@@ -89,6 +90,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const showAdmin = isAdminEmail(user?.email);
 
   const handleSignOut = async () => {
     await signOut();
@@ -166,6 +168,17 @@ export function AppSidebar() {
           />
 
           {/* User Profile / Settings */}
+          {showAdmin && (
+            <SidebarLink
+              link={{
+                label: "Admin",
+                href: "/admin",
+                icon: <Shield className="h-5 w-5 text-primary shrink-0" />,
+              }}
+              className="hover:bg-primary/10"
+            />
+          )}
+
           <SidebarLink
             link={{
               label: userName,
