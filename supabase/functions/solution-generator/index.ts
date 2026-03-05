@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,21 @@ serve(async (req) => {
     }
 
     try {
+        const rateLimit = enforceRateLimit(req, "solution-generator");
+        if (!rateLimit.allowed) {
+            return new Response(
+                JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
+                {
+                    status: 429,
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type": "application/json",
+                        "Retry-After": String(rateLimit.retryAfter),
+                    },
+                },
+            );
+        }
+
         const { problem, language } = await req.json();
 
         const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
@@ -18,11 +34,13 @@ serve(async (req) => {
             throw new Error("GROQ_API_KEY is not configured");
         }
 
-        const systemPrompt = `You are a world-class competitive programmer and algorithm expert. 
-Your task is to provide the MOST OPTIMAL solution for the given problem in ${language}.
-Your code must be clean, readable, and highly optimized for time and space complexity.
-IMPORTANT: Return ONLY the raw code. Do not wrap it in markdown backticks. Do not add explanations. Do not simple print statements unless part of the solution.
-The code must be a complete valid ${language} function/script that can be executed directly.`;
+        const systemPrompt = `You are a world-class competitive programmer and algorithm expert.
+Write the most optimal valid ${language} solution for the given problem.
+Rules:
+- Return ONLY raw code (no markdown, no explanations, no comments unless essential).
+- Keep output minimal and directly executable.
+- Use the best known time/space complexity for the constraints.
+- Include only what is required to solve the problem.`;
 
         const userPrompt = `Problem Title: ${problem.title}
 Problem Description: ${problem.description}

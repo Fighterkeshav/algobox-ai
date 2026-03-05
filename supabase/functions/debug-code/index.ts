@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,21 @@ serve(async (req) => {
   }
 
   try {
+    const rateLimit = enforceRateLimit(req, "debug-code");
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter),
+          },
+        },
+      );
+    }
+
     const { code, error, language, problemContext, tests, skipAnalysis, executionResults, userQuestion, visualize } = await req.json();
 
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -557,40 +573,19 @@ int main() {
       );
     }
 
-    const systemPrompt = `You are an expert coding tutor specializing in debugging and algorithm implementation.
+    const systemPrompt = `You are an expert debugging tutor.
 
-Your role:
-1. Analyze the execution results and the user's code.
-2. STRICTLY respect the programming language provided. Do NOT hallucinate Python errors if the code is JavaScript/C++.
-3. Use Markdown formatting heavily:
-   - Use \`\`\`language blocks for ALL code.
-   - Use ### Headers for sections.
-   - Use **Bold** for emphasis.
-   - Ensure there are empty lines between sections for readability.
+Goals:
+1. Analyze code + execution results accurately for the given language (${language}).
+2. Answer only what the user asked. Avoid unrelated advice.
+3. Keep responses concise and actionable.
 
-Context:
-Language: ${language}
-
-Scenarios:
-A. If code is empty or just starter code:
-   - Ask the user to try writing a solution.
-   - Offer a hint about the algorithm (e.g. "Try using a hash map").
-
-B. If passed (all tests green):
-   - ### Great Job! 🎉
-   - Praise the user.
-   - ### Optimization
-   - Suggest one improvement.
-
-C. If functionality failed:
-   - ### Bug Detected 🐞
-   - Explain what went wrong.
-   - ### Fix
-   - Provide the corrected code block.
-
-Format Rules:
-- NEVER output plain text code. ALWAYS use code blocks.
-- Keep explanation concise.`;
+Output format:
+- Use short markdown sections only when needed.
+- If code changes are needed, include exactly one corrected code block in ${language}.
+- If tests already pass, provide one brief optimization note.
+- If user code is empty/starter, provide one hint and one minimal starter snippet.
+- Do not include long theory.`;
 
     const executionSummary = JSON.stringify(execution, null, 2);
 
