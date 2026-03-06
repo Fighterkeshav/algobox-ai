@@ -172,6 +172,7 @@ export default function Admin() {
   const [newProblemStarterCPP, setNewProblemStarterCPP] = useState("#include <iostream>\n\nint main() {\n    // Write your code here\n    return 0;\n}");
   const [newProblemTestInput, setNewProblemTestInput] = useState("");
   const [newProblemTestExpected, setNewProblemTestExpected] = useState("");
+  const [editingProblemId, setEditingProblemId] = useState<string | null>(null);
 
   const [customProblems, setCustomProblems] = useState<Problem[]>(() => getCustomProblems());
   const [featureFlags, setFeatureFlags] = useState<AdminFeatureFlags>(() => getFeatureFlags());
@@ -220,13 +221,62 @@ export default function Admin() {
     toast.success("Admin rights removed.");
   };
 
+  const handleEditProblem = (problem: Problem) => {
+    setEditingProblemId(problem.id);
+    setNewProblemTitle(problem.title);
+    setNewProblemDescription(problem.description);
+    setNewProblemCategory(problem.category);
+    setNewProblemDifficulty(problem.difficulty);
+    setNewProblemConstraints(problem.constraints?.join("\n") || "");
+    setNewProblemHints(problem.hints?.join("\n") || "");
+    setNewProblemTags(problem.tags?.join(", ") || "");
+    setNewProblemSolutionStructure(problem.solutionStructure || "");
+    setNewProblemStarterJS(problem.starterCode?.javascript || "");
+    setNewProblemStarterPython(problem.starterCode?.python || "");
+    setNewProblemStarterCPP(problem.starterCode?.cpp || "");
+    setNewProblemTestInput(problem.testCases?.[0]?.input || "");
+    setNewProblemTestExpected(problem.testCases?.[0]?.expected || "");
+
+    // Scroll to form
+    const formElement = document.getElementById("add-problem-form");
+    formElement?.scrollIntoView({ behavior: "smooth" });
+    toast.message(`Editing: ${problem.title}`);
+  };
+
+  const handleDeleteProblem = (id: string, title: string) => {
+    if (confirm(`Are you sure you want to delete "${title}"?`)) {
+      const updated = customProblems.filter((p) => p.id !== id);
+      setCustomProblems(updated);
+      saveCustomProblems(updated);
+      toast.success("Problem deleted.");
+      if (editingProblemId === id) handleCancelEdit();
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProblemId(null);
+    setNewProblemTitle("");
+    setNewProblemDescription("");
+    setNewProblemCategory("");
+    setNewProblemDifficulty("beginner");
+    setNewProblemConstraints("");
+    setNewProblemHints("");
+    setNewProblemTags("");
+    setNewProblemSolutionStructure("");
+    setNewProblemStarterJS("function solution() {\n  // Write your code here\n}");
+    setNewProblemStarterPython("def solution():\n    # Write your code here\n    pass");
+    setNewProblemStarterCPP("#include <iostream>\n\nint main() {\n    // Write your code here\n    return 0;\n}");
+    setNewProblemTestInput("");
+    setNewProblemTestExpected("");
+  };
+
   const handleAddProblem = () => {
     if (!newProblemTitle.trim() || !newProblemDescription.trim()) {
       toast.error("Add both title and description.");
       return;
     }
 
-    const id = `custom-${Date.now()}`;
+    const id = editingProblemId || `custom-${Date.now()}`;
     const newProblem: Problem = {
       id,
       title: newProblemTitle.trim(),
@@ -265,25 +315,20 @@ export default function Admin() {
       ],
     };
 
-    const updated = [newProblem, ...customProblems];
+    let updated: Problem[];
+    if (editingProblemId) {
+      updated = customProblems.map((p) => p.id === editingProblemId ? newProblem : p);
+      toast.success("Problem updated.");
+    } else {
+      updated = [newProblem, ...customProblems];
+      toast.success("Practice problem added.");
+    }
+
     setCustomProblems(updated);
     saveCustomProblems(updated);
 
     // Reset fields
-    setNewProblemTitle("");
-    setNewProblemDescription("");
-    setNewProblemCategory("");
-    setNewProblemConstraints("");
-    setNewProblemHints("");
-    setNewProblemTags("");
-    setNewProblemSolutionStructure("");
-    setNewProblemStarterJS("function solution() {\n  // Write your code here\n}");
-    setNewProblemStarterPython("def solution():\n    # Write your code here\n    pass");
-    setNewProblemStarterCPP("#include <iostream>\n\nint main() {\n    // Write your code here\n    return 0;\n}");
-    setNewProblemTestInput("");
-    setNewProblemTestExpected("");
-
-    toast.success("Practice problem added.");
+    handleCancelEdit();
   };
 
 
@@ -467,15 +512,24 @@ export default function Admin() {
       {activeTab === "problems" && (
         <div className="space-y-4 animate-up">
           {/* Add problem form */}
-          <div className="rounded-2xl border border-white/5 bg-card/50 backdrop-blur-sm p-6 space-y-5">
-            <div>
-              <h2 className="font-semibold text-lg flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                Add Practice Problem
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Create custom challenges that appear in the practice section.
-              </p>
+          <div id="add-problem-form" className="rounded-2xl border border-white/5 bg-card/50 backdrop-blur-sm p-6 space-y-5 scroll-mt-8">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="font-semibold text-lg flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  {editingProblemId ? "Edit Practice Problem" : "Add Practice Problem"}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {editingProblemId
+                    ? "Update the details of your existing custom challenge."
+                    : "Create custom challenges that appear in the practice section."}
+                </p>
+              </div>
+              {editingProblemId && (
+                <Button variant="ghost" size="sm" onClick={handleCancelEdit} className="text-muted-foreground hover:text-foreground">
+                  Cancel Edit
+                </Button>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -700,8 +754,8 @@ export default function Admin() {
                 className="w-full gap-1.5"
                 disabled={!newProblemTitle.trim() || !newProblemDescription.trim() || !newProblemTestExpected.trim()}
               >
-                <Plus className="h-4 w-4" />
-                Add Problem to Library
+                {editingProblemId ? <ToggleRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {editingProblemId ? "Update Problem" : "Add Problem to Library"}
               </Button>
             </div>
           </div>
@@ -722,7 +776,7 @@ export default function Admin() {
                 {customProblems.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-3 rounded-xl bg-background/40 border border-white/5 px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl bg-background/40 border border-white/5 px-4 py-3 group/row transition-all hover:bg-background/60"
                   >
                     <div className="rounded-lg p-1.5 bg-accent/10 text-accent">
                       <BookOpen className="h-3.5 w-3.5" />
@@ -733,7 +787,22 @@ export default function Admin() {
                         {p.description}
                       </p>
                     </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEditProblem(p)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                        title="Edit problem"
+                      >
+                        <Wrench className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProblem(p.id, p.title)}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                        title="Delete problem"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
