@@ -4,7 +4,6 @@ import { PatternShowcase } from "@/components/landing/PatternShowcase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
-import { FloatingElements } from "@/components/ui/FloatingElements";
 import {
   ArrowRight,
   Code2,
@@ -15,13 +14,9 @@ import {
   Zap,
   Target,
   ChevronRight,
+  Play,
 } from "lucide-react";
-import {
-  useScrollAnimation,
-  useStaggerAnimation,
-  useTextReveal,
-  useHoverAnimation
-} from "@/lib/animations";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
@@ -29,31 +24,37 @@ const features = [
     icon: <Brain className="h-5 w-5" />,
     title: "AI-Personalized Roadmap",
     description: "Dynamic learning paths that adapt to your skill level, goals, and progress in real-time.",
+    gradient: "from-violet-500/20 to-indigo-500/20",
   },
   {
     icon: <Code2 className="h-5 w-5" />,
     title: "In-Browser Code Editor",
     description: "Write, run, and test code in Python, JavaScript, and C++ without leaving the platform.",
+    gradient: "from-blue-500/20 to-cyan-500/20",
   },
   {
     icon: <Sparkles className="h-5 w-5" />,
     title: "AI Debugging Assistant",
     description: "Get instant explanations for your mistakes with actionable suggestions to improve.",
+    gradient: "from-purple-500/20 to-pink-500/20",
   },
   {
     icon: <Target className="h-5 w-5" />,
     title: "Smart Practice System",
     description: "Problems selected based on your weak areas, past mistakes, and confidence scores.",
+    gradient: "from-emerald-500/20 to-teal-500/20",
   },
   {
     icon: <Map className="h-5 w-5" />,
     title: "Interactive Cheat Sheets",
     description: "Auto-generated notes from your solved problems, linked to concepts in your roadmap.",
+    gradient: "from-amber-500/20 to-orange-500/20",
   },
   {
     icon: <BarChart3 className="h-5 w-5" />,
     title: "Progress Analytics",
     description: "Skill heatmaps, mistake patterns, and consistency tracking to optimize your learning.",
+    gradient: "from-rose-500/20 to-red-500/20",
   },
 ];
 
@@ -63,147 +64,198 @@ const stats = [
   { value: "AI", label: "Powered Learning" },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
+};
+
 export default function Landing() {
   const { user } = useAuth();
-  const heroRef = useScrollAnimation({ animation: "fadeInUp", delay: 0.1 });
-  const titleRef = useTextReveal();
-  const featuresRef = useStaggerAnimation(0.1, "fadeInUp");
-  const statsRef = useStaggerAnimation(0.2, "scaleIn");
-  const ctaRef = useScrollAnimation({ animation: "scaleIn", delay: 0.2 });
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden font-sans selection:bg-primary/20">
-      {/* Subtle Animated Background - Lower intensity for minimalism */}
+    <div className="min-h-screen bg-background relative overflow-hidden">
       <AnimatedBackground variant="default" intensity="low" />
-      <FloatingElements count={6} />
 
-      {/* Navigation - Glassmorphism */}
-      <nav className="fixed top-0 z-50 w-full glass border-b-0">
-        <div className="container mx-auto flex h-16 items-center justify-between px-6">
+      {/* Ambient glow orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-[5]">
+        <div className="absolute -top-[300px] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-primary/[0.07] blur-[120px]" />
+        <div className="absolute top-[60%] -left-[200px] w-[500px] h-[500px] rounded-full bg-blue-600/[0.05] blur-[100px]" />
+        <div className="absolute top-[40%] -right-[200px] w-[400px] h-[400px] rounded-full bg-violet-600/[0.04] blur-[100px]" />
+      </div>
+
+      {/* Navigation */}
+      <nav className="fixed top-0 z-50 w-full border-b border-white/[0.04] bg-background/60 backdrop-blur-2xl">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <Logo size="md" />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Login</Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-sm">
+                Login
+              </Button>
             </Link>
             <Link to={user ? "/dashboard" : "/signup"}>
-              <Button size="sm" className="group glass-button bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 hover:border-primary/40">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 text-sm">
                 <span className="hidden sm:inline">Get Started</span>
                 <span className="sm:hidden">Start</span>
-                <ArrowRight className="ml-2 h-3 w-3 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Button>
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section - Clean & Minimal */}
-      <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-32 px-6">
+      {/* Hero Section */}
+      <section className="relative pt-28 pb-16 sm:pt-40 sm:pb-28 px-4 sm:px-6">
         <div className="container relative mx-auto">
-          <div
-            ref={heroRef}
+          <motion.div
             className="mx-auto max-w-4xl text-center"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
-            <Badge variant="outline" className="mb-8 px-4 py-1.5 text-xs font-medium border-primary/20 text-primary bg-primary/5 backdrop-blur-sm rounded-full">
-              <Zap className="mr-2 h-3 w-3" />
-              AI-Powered Learning Platform
-            </Badge>
+            <motion.div variants={itemVariants}>
+              <Badge variant="outline" className="mb-6 sm:mb-8 px-4 py-1.5 text-xs font-medium border-primary/20 text-primary bg-primary/[0.06] backdrop-blur-sm rounded-full">
+                <Zap className="mr-2 h-3 w-3" />
+                AI-Powered Learning Platform
+              </Badge>
+            </motion.div>
 
-            <h1 className="mb-6 text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight">
-              <span ref={titleRef} className="block text-foreground drop-shadow-sm">Master Algorithms with</span>
-              <span className="block text-primary mt-2 bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent animate-in fade-in zoom-in duration-1000">
-                AI-Guided Precision
+            <motion.h1
+              variants={itemVariants}
+              className="mb-5 sm:mb-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight"
+            >
+              <span className="block text-foreground">Master Algorithms</span>
+              <span className="block mt-1 sm:mt-2 gradient-text-animated text-glow">
+                with AI Precision
               </span>
-            </h1>
+            </motion.h1>
 
-            <p className="mx-auto mb-10 max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Transform into an industry-ready problem solver. Adaptive roadmaps,
-              real-time AI debugging, and personalized practice in a beautiful, distraction-free environment.
-            </p>
+            <motion.p
+              variants={itemVariants}
+              className="mx-auto mb-8 sm:mb-10 max-w-2xl text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed"
+            >
+              Transform into an industry-ready problem solver with adaptive roadmaps,
+              real-time AI debugging, and personalized practice — all in one beautiful platform.
+            </motion.p>
 
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <motion.div variants={itemVariants} className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
               <Link to={user ? "/dashboard" : "/signup"} className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-base shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/25 transition-all hover:shadow-primary/40 hover:scale-[1.02]">
                   Start Your Journey
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/roadmap" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-8 text-base glass hover:bg-white/5 border-white/10">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-8 text-sm sm:text-base border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.15] transition-all">
+                  <Play className="mr-2 h-4 w-4" />
                   Explore Roadmaps
                 </Button>
               </Link>
-            </div>
+            </motion.div>
 
-            {/* Stats - Minimal */}
-            <div
-              ref={statsRef}
-              className="mt-16 sm:mt-24 flex items-center justify-center gap-8 sm:gap-16 border-t border-white/5 pt-10"
+            {/* Stats */}
+            <motion.div
+              variants={itemVariants}
+              className="mt-14 sm:mt-20 flex items-center justify-center gap-8 sm:gap-16"
             >
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center group cursor-default">
-                  <div className="text-2xl sm:text-4xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
+                  <div className="text-2xl sm:text-4xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
                     {stat.value}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                    {stat.label}
+                  </div>
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Features Section - Glass Cards */}
-      <section className="py-24 relative px-6 bg-gradient-to-b from-transparent to-black/20">
-        <div className="container mx-auto">
-          <div className="mb-16 text-center max-w-2xl mx-auto">
-            <h2 className="mb-4 text-3xl sm:text-4xl font-bold tracking-tight">
-              Everything You Need to Level Up
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              A complete, futuristic learning ecosystem designed to accelerate your coding journey.
-            </p>
-          </div>
+      {/* Divider */}
+      <div className="divider-glow" />
 
-          <div ref={featuresRef} className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature, index) => (
+      {/* Features Section */}
+      <section className="py-20 sm:py-28 relative px-4 sm:px-6">
+        <div className="container mx-auto">
+          <motion.div
+            className="mb-14 sm:mb-16 text-center max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="mb-3 sm:mb-4 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
+              Everything You Need to <span className="gradient-text">Level Up</span>
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
+              A complete learning ecosystem designed to accelerate your coding journey.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {features.map((feature) => (
               <FeatureCard key={feature.title} feature={feature} />
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Pattern Showcase Section */}
+      {/* Pattern Showcase */}
       <PatternShowcase />
 
-      {/* CTA Section - Minimal Glass */}
-      <section className="py-24 relative px-6">
-        <div className="container mx-auto max-w-5xl">
-          <div ref={ctaRef} className="relative overflow-hidden rounded-3xl border border-white/10 glass-card p-12 text-center">
-            {/* Decorative glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-32 bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
+      {/* CTA Section */}
+      <section className="py-20 sm:py-28 relative px-4 sm:px-6">
+        <div className="container mx-auto max-w-4xl">
+          <motion.div
+            className="relative overflow-hidden rounded-3xl p-8 sm:p-12 md:p-16 text-center glass-card"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+          >
+            {/* Background glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[200px] bg-primary/15 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[300px] h-[100px] bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
 
-            <h2 className="relative mb-6 text-3xl sm:text-4xl font-bold">
-              Ready to Transform Your Skills?
+            <h2 className="relative mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl font-bold">
+              Ready to Transform <br className="hidden sm:block" />
+              <span className="gradient-text">Your Skills?</span>
             </h2>
-            <p className="relative mx-auto mb-8 max-w-lg text-lg text-muted-foreground">
+            <p className="relative mx-auto mb-6 sm:mb-8 max-w-lg text-sm sm:text-base text-muted-foreground">
               Join developers who are using Algobox to master algorithms and land their dream jobs.
             </p>
             <Link to={user ? "/dashboard" : "/signup"}>
-              <Button size="lg" className="relative h-12 px-8 text-base bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button size="lg" className="relative h-12 px-8 text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-[1.02]">
                 Start Learning Now
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-6 bg-black/20">
+      <footer className="border-t border-white/[0.04] py-8 px-4 sm:px-6">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
           <p className="text-xs text-muted-foreground">
-            © 2024 Algobox. Built for developers, by developers.
+            © 2025 Algobox. Built for developers, by developers.
           </p>
         </div>
       </footer>
@@ -211,19 +263,22 @@ export default function Landing() {
   );
 }
 
-function FeatureCard({ feature }: { feature: any }) {
-  const ref = useHoverAnimation(1.02);
+function FeatureCard({ feature }: { feature: typeof features[0] }) {
   return (
-    <div
-      ref={ref}
-      className="group relative rounded-2xl border border-white/5 glass-card p-8 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+    <motion.div
+      variants={itemVariants}
+      className="group relative rounded-2xl glass-card-hover p-6 sm:p-7"
     >
-      <div className="mb-4 inline-flex rounded-xl bg-primary/10 p-3 text-primary group-hover:scale-110 transition-transform duration-300">
+      <div className={`mb-4 inline-flex rounded-xl bg-gradient-to-br ${feature.gradient} p-3 text-primary ring-1 ring-white/[0.06] group-hover:ring-primary/20 transition-all duration-500`}>
         {feature.icon}
       </div>
-      <h3 className="mb-2 text-xl font-semibold text-foreground group-hover:text-primary transition-colors">{feature.title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-      <ChevronRight className="absolute right-6 top-8 h-4 w-4 text-primary opacity-0 -translate-x-2 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-    </div>
+      <h3 className="mb-2 text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+        {feature.title}
+      </h3>
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+        {feature.description}
+      </p>
+      <ChevronRight className="absolute right-5 top-7 h-4 w-4 text-primary opacity-0 -translate-x-2 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-60" />
+    </motion.div>
   );
 }
