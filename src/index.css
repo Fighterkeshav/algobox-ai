@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,52 +6,52 @@
 
 @layer base {
   :root {
-    /* Midnight Indigo Theme */
-    --background: 224 47% 7%;
-    --foreground: 210 33% 96%;
+    /* Deep Obsidian / Cosmic Theme */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 224 35% 12%;
-    --card-foreground: 210 33% 96%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 224 35% 12%;
-    --popover-foreground: 210 33% 96%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 258 90% 66%;
-    --primary-foreground: 240 100% 99%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 20% 98%;
 
-    --secondary: 223 27% 18%;
-    --secondary-foreground: 210 33% 96%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 223 24% 22%;
-    --muted-foreground: 220 13% 71%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 191 85% 55%;
-    --accent-foreground: 224 47% 7%;
+    --accent: 262.1 83.3% 57.8%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 78% 63%;
-    --destructive-foreground: 240 100% 99%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 223 23% 26%;
-    --input: 223 23% 26%;
-    --ring: 258 90% 66%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 262.1 83.3% 57.8%;
 
     --radius: 0.75rem;
 
-    /* Sidebar */
-    --sidebar-background: 224 40% 9%;
-    --sidebar-foreground: 210 33% 96%;
-    --sidebar-primary: 258 90% 66%;
-    --sidebar-primary-foreground: 240 100% 99%;
-    --sidebar-accent: 223 27% 18%;
-    --sidebar-accent-foreground: 210 33% 96%;
-    --sidebar-border: 223 23% 26%;
-    --sidebar-ring: 258 90% 66%;
+    /* Sidebar - Matching theme */
+    --sidebar-background: 240 10% 4.5%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 262.1 83.3% 57.8%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 240 4.9% 83.9%;
 
     /* Custom Surface Tokens */
-    --surface-elevated: 224 35% 14%;
-    --surface-overlay: 224 35% 12%;
-    --code-bg: 224 47% 8%;
-    --code-border: 223 23% 26%;
+    --surface-elevated: 240 10% 8%;
+    --surface-overlay: 240 10% 10%;
+    --code-bg: 240 10% 2%;
+    --code-border: 240 3.7% 18%;
   }
 
   .light {
@@ -127,15 +127,17 @@
 
 @layer components {
   .glass {
-    @apply bg-black/40 backdrop-blur-md border border-white/10;
+    @apply bg-background/40 backdrop-blur-md border border-white/5;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   }
 
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
+    @apply bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
 
   .glass-button {
-    @apply bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm border border-white/10 transition-all duration-300;
+    @apply bg-white/5 hover:bg-white/10 text-white backdrop-blur-md border border-white/10 transition-all duration-300;
   }
 
   /* Code block styling */

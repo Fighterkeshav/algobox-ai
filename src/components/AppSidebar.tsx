@@ -126,9 +126,9 @@ export function AppSidebar() {
                       <SidebarLink
                         link={item}
                         className={cn(
-                          "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-all duration-200",
-                          location.pathname === item.href && "bg-sidebar-accent text-sidebar-primary shadow-sm font-medium",
-                          location.pathname.startsWith(item.href) && item.href !== "/dashboard" && "bg-sidebar-accent/50 text-sidebar-primary"
+                          "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-all duration-300 group",
+                          location.pathname === item.href && "bg-primary/15 text-primary border border-primary/20 shadow-[0_0_15px_rgba(139,92,246,0.1)] font-semibold",
+                          location.pathname.startsWith(item.href) && item.href !== "/dashboard" && "bg-primary/10 text-primary"
                         )}
                       />
                       {/* NEW Badge - Premium Style */}

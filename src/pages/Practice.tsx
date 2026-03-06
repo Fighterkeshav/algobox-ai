@@ -359,6 +359,19 @@ export default function Practice() {
                     {selectedProblem.description}
                   </div>
 
+                  {/* Solution Structure (if present) */}
+                  {selectedProblem.solutionStructure && (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-primary">
+                        <Lightbulb className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Expected Solution Structure</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground leading-relaxed">
+                        {selectedProblem.solutionStructure}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Examples */}
                   {selectedProblem.examples.map((ex, i) => (
                     <div key={i} className="space-y-1">
