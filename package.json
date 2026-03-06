@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:conflicts": "if rg -n \"^(<<<<<<<|=======|>>>>>>>)\" . --glob '!node_modules/**' --glob '!dist/**' --glob '!.git/**'; then echo \"Merge conflict markers found\" && exit 1; else echo \"No merge conflict markers found\"; fi"
   },
   "dependencies": {
     "@fontsource/outfit": "^5.2.8",
