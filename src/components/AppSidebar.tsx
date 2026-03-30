@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/aceternity-sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { isAdminEmail } from "@/lib/admin";
+
 import {
   LayoutDashboard,
   Map,
@@ -89,8 +89,8 @@ export function AppSidebar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const showAdmin = isAdminEmail(user?.email);
+  const { user, signOut, isAdmin } = useAuth();
+  const showAdmin = isAdmin;
 
   const handleSignOut = async () => {
     await signOut();

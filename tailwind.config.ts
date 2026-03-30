@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Sora', 'Outfit', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Manrope', 'Sora', 'Outfit', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {

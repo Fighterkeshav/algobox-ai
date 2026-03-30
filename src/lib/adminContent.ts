@@ -1,6 +1,5 @@
 import { Problem } from "@/lib/problems/problemLibrary";
-
-const CUSTOM_PROBLEMS_KEY = "algobox_custom_problems";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AdminFeatureFlags {
   improveWebExperience: boolean;
@@ -14,37 +13,79 @@ export const DEFAULT_ADMIN_FEATURE_FLAGS: AdminFeatureFlags = {
   maintenanceMode: false,
 };
 
-const FEATURE_FLAGS_KEY = "algobox_feature_flags";
+export const getCustomProblems = async (): Promise<Problem[]> => {
+  const { data, error } = await (supabase as any)
+    .from('custom_problems')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-const safeParse = <T>(value: string | null, fallback: T): T => {
-  if (!value) return fallback;
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return fallback;
-  }
+  if (error || !data) return [];
+  
+  // Map snake_case to camelCase
+  return data.map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    difficulty: row.difficulty,
+    category: row.category,
+    tags: row.tags || [],
+    starterCode: row.starter_code || {},
+    solutionStructure: row.solution_structure || '',
+    testCases: row.test_cases || [],
+    hints: row.hints || [],
+    constraints: row.constraints || ''
+  })) as Problem[];
 };
 
-export const getCustomProblems = (): Problem[] => {
-  if (typeof window === "undefined") return [];
-  return safeParse<Problem[]>(localStorage.getItem(CUSTOM_PROBLEMS_KEY), []);
-};
-
-export const saveCustomProblems = (problems: Problem[]) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(CUSTOM_PROBLEMS_KEY, JSON.stringify(problems));
-};
-
-export const getFeatureFlags = (): AdminFeatureFlags => {
-  if (typeof window === "undefined") return DEFAULT_ADMIN_FEATURE_FLAGS;
-  const stored = safeParse<Partial<AdminFeatureFlags>>(localStorage.getItem(FEATURE_FLAGS_KEY), {});
-  return {
-    ...DEFAULT_ADMIN_FEATURE_FLAGS,
-    ...stored,
+export const saveCustomProblem = async (problem: Omit<Problem, "id"> & { id?: string }) => {
+  const payload: any = {
+    title: problem.title,
+    description: problem.description,
+    difficulty: problem.difficulty,
+    category: problem.category,
+    tags: problem.tags,
+    starter_code: problem.starterCode,
+    solution_structure: problem.solutionStructure,
+    test_cases: problem.testCases,
+    hints: problem.hints,
+    constraints: problem.constraints
   };
+
+  // If a valid UUID exists, use it for updating
+  if (problem.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(problem.id)) {
+    payload.id = problem.id;
+  }
+
+  const { data, error } = await (supabase as any)
+    .from('custom_problems')
+    .upsert(payload, { onConflict: 'id' })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 };
 
-export const saveFeatureFlags = (flags: AdminFeatureFlags) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(FEATURE_FLAGS_KEY, JSON.stringify(flags));
+export const deleteCustomProblem = async (id: string) => {
+  const { error } = await (supabase as any).from('custom_problems').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export const getFeatureFlags = async (): Promise<AdminFeatureFlags> => {
+  const { data, error } = await (supabase as any).from('feature_flags').select('*');
+  if (error || !data) return DEFAULT_ADMIN_FEATURE_FLAGS;
+
+  const flags = { ...DEFAULT_ADMIN_FEATURE_FLAGS };
+  data.forEach((row: any) => {
+    if (row.id in flags) {
+      (flags as any)[row.id] = row.value;
+    }
+  });
+  return flags;
+};
+
+export const saveFeatureFlags = async (flags: AdminFeatureFlags) => {
+  const updates = Object.entries(flags).map(([id, value]) => ({ id, value }));
+  const { error } = await (supabase as any).from('feature_flags').upsert(updates);
+  if (error) throw error;
 };

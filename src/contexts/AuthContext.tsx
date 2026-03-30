@@ -3,10 +3,14 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeEmail, sanitizeUsername } from "@/lib/authSecurity";
 
+const PRIMARY_ADMIN_EMAIL = "fighterkeshav7@gmail.com";
+
 interface AuthContextType {
     user: User | null;
     session: Session | null;
     loading: boolean;
+    isAdmin: boolean;
+    isPrimaryAdmin: boolean;
     signUp: (email: string, password: string, username?: string) => Promise<{ error: Error | null }>;
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
     signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -19,19 +23,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isPrimaryAdmin, setIsPrimaryAdmin] = useState(false);
+
+    const checkAdminStatus = async (userEmail: string | undefined) => {
+        if (!userEmail) {
+            setIsAdmin(false);
+            setIsPrimaryAdmin(false);
+            return;
+        }
+        
+        const normalized = userEmail.toLowerCase();
+        if (normalized === PRIMARY_ADMIN_EMAIL) {
+            setIsAdmin(true);
+            setIsPrimaryAdmin(true);
+            return;
+        }
+        
+        setIsPrimaryAdmin(false);
+
+        try {
+            const { data, error } = await (supabase as any)
+                .from('admin_users')
+                .select('email')
+                .eq('email', normalized)
+                .maybeSingle(); // Use maybeSingle to avoid 406 errors if no rows
+                
+            setIsAdmin(!!data);
+        } catch (err) {
+            setIsAdmin(false);
+        }
+    };
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
-            setLoading(false);
+            checkAdminStatus(session?.user?.email).finally(() => setLoading(false));
         });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
+            await checkAdminStatus(session?.user?.email);
             setLoading(false);
 
             if (session?.user) {
@@ -137,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ user, session, loading, isAdmin, isPrimaryAdmin, signUp, signIn, signInWithGoogle, signOut }}>
             {children}
         </AuthContext.Provider>
     );

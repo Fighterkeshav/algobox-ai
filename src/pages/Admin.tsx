@@ -1,19 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  getAdminEmails,
-  getPrimaryAdminEmail,
-  isAdminEmail,
-  isPrimaryAdmin,
-  saveAdminEmails,
-} from "@/lib/admin";
+import { getPrimaryAdminEmail } from "@/lib/admin";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getCustomProblems,
   getFeatureFlags,
-  saveCustomProblems,
+  saveCustomProblem,
+  deleteCustomProblem,
   saveFeatureFlags,
   type AdminFeatureFlags,
+  DEFAULT_ADMIN_FEATURE_FLAGS,
 } from "@/lib/adminContent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,9 +152,9 @@ function FeatureRow({
 // Main component
 // ──────────────────────────────────────────────
 export default function Admin() {
-  const { user } = useAuth();
+  const { user, isAdmin, isPrimaryAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("access");
-  const [adminEmails, setAdminEmails] = useState<string[]>(() => getAdminEmails());
+  const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newProblemTitle, setNewProblemTitle] = useState("");
   const [newProblemDescription, setNewProblemDescription] = useState("");
@@ -174,21 +171,48 @@ export default function Admin() {
   const [newProblemTestExpected, setNewProblemTestExpected] = useState("");
   const [editingProblemId, setEditingProblemId] = useState<string | null>(null);
 
-  const [customProblems, setCustomProblems] = useState<Problem[]>(() => getCustomProblems());
-  const [featureFlags, setFeatureFlags] = useState<AdminFeatureFlags>(() => getFeatureFlags());
+  const [customProblems, setCustomProblems] = useState<Problem[]>([]);
+  const [featureFlags, setFeatureFlags] = useState<AdminFeatureFlags>(DEFAULT_ADMIN_FEATURE_FLAGS);
+  const [isLoading, setIsLoading] = useState(true);
 
   const currentEmail = user?.email?.toLowerCase();
-  const hasAdminAccess = isAdminEmail(currentEmail);
+  const primaryAdminEmail = getPrimaryAdminEmail();
 
-  if (!hasAdminAccess) {
+  useEffect(() => {
+    if (!isAdmin) return;
+    
+    const loadData = async () => {
+      try {
+        const [emailsRes, problems, flags] = await Promise.all([
+          (supabase as any).from('admin_users').select('email'),
+          getCustomProblems(),
+          getFeatureFlags()
+        ]);
+        
+        const emails = emailsRes.data ? emailsRes.data.map((d: any) => d.email) : [];
+        setAdminEmails(Array.from(new Set([primaryAdminEmail, ...emails])));
+        setCustomProblems(problems);
+        setFeatureFlags(flags);
+      } catch (err) {
+        console.error("Error loading admin data:", err);
+        toast.error("Failed to load admin data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [isAdmin, primaryAdminEmail]);
+
+  if (user === undefined) return null; // Wait for auth init
+  if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const canGrantAdmins = isPrimaryAdmin(currentEmail);
-  const primaryAdminEmail = getPrimaryAdminEmail();
+  const canGrantAdmins = isPrimaryAdmin;
 
   // ── Handlers ──────────────────────────────
-  const handleAddAdmin = () => {
+  const handleAddAdmin = async () => {
     if (!canGrantAdmins) {
       toast.error("Only the primary admin can grant admin rights.");
       return;
@@ -202,23 +226,37 @@ export default function Admin() {
       toast.message("This user already has admin access.");
       return;
     }
-    const updated = [...adminEmails, email];
-    setAdminEmails(updated);
-    saveAdminEmails(updated);
-    setNewAdminEmail("");
-    toast.success("Admin rights granted.");
+    
+    try {
+      const { error } = await (supabase as any).from('admin_users').insert({ email });
+      if (error) throw error;
+      
+      setAdminEmails([...adminEmails, email]);
+      setNewAdminEmail("");
+      toast.success("Admin rights granted.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to grant admin rights.");
+    }
   };
 
-  const handleRemoveAdmin = (email: string) => {
+  const handleRemoveAdmin = async (email: string) => {
     if (!canGrantAdmins) return;
     if (email === primaryAdminEmail) {
       toast.error("Primary admin cannot be removed.");
       return;
     }
-    const updated = adminEmails.filter((e) => e !== email);
-    setAdminEmails(updated);
-    saveAdminEmails(updated);
-    toast.success("Admin rights removed.");
+    
+    try {
+      const { error } = await (supabase as any).from('admin_users').delete().eq('email', email);
+      if (error) throw error;
+      
+      setAdminEmails(adminEmails.filter((e) => e !== email));
+      toast.success("Admin rights removed.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove admin rights.");
+    }
   };
 
   const handleEditProblem = (problem: Problem) => {
@@ -243,13 +281,17 @@ export default function Admin() {
     toast.message(`Editing: ${problem.title}`);
   };
 
-  const handleDeleteProblem = (id: string, title: string) => {
+  const handleDeleteProblem = async (id: string, title: string) => {
     if (confirm(`Are you sure you want to delete "${title}"?`)) {
-      const updated = customProblems.filter((p) => p.id !== id);
-      setCustomProblems(updated);
-      saveCustomProblems(updated);
-      toast.success("Problem deleted.");
-      if (editingProblemId === id) handleCancelEdit();
+      try {
+        await deleteCustomProblem(id);
+        setCustomProblems(customProblems.filter((p) => p.id !== id));
+        toast.success("Problem deleted.");
+        if (editingProblemId === id) handleCancelEdit();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to delete problem.");
+      }
     }
   };
 
@@ -270,15 +312,14 @@ export default function Admin() {
     setNewProblemTestExpected("");
   };
 
-  const handleAddProblem = () => {
+  const handleAddProblem = async () => {
     if (!newProblemTitle.trim() || !newProblemDescription.trim()) {
       toast.error("Add both title and description.");
       return;
     }
 
-    const id = editingProblemId || `custom-${Date.now()}`;
-    const newProblem: Problem = {
-      id,
+    const newProblem: Omit<Problem, "id"> & { id?: string } = {
+      ...(editingProblemId ? { id: editingProblemId } : {}),
       title: newProblemTitle.trim(),
       description: newProblemDescription.trim(),
       solutionStructure: newProblemSolutionStructure.trim() || undefined,
@@ -315,30 +356,54 @@ export default function Admin() {
       ],
     };
 
-    let updated: Problem[];
-    if (editingProblemId) {
-      updated = customProblems.map((p) => p.id === editingProblemId ? newProblem : p);
-      toast.success("Problem updated.");
-    } else {
-      updated = [newProblem, ...customProblems];
-      toast.success("Practice problem added.");
+    try {
+      const saved = await saveCustomProblem(newProblem);
+      
+      // Update local state without fetching again
+      const mappedSaved: Problem = {
+        ...newProblem,
+        id: saved.id
+      } as Problem;
+
+      if (editingProblemId) {
+        setCustomProblems(customProblems.map((p) => p.id === editingProblemId ? mappedSaved : p));
+        toast.success("Problem updated.");
+      } else {
+        setCustomProblems([mappedSaved, ...customProblems]);
+        toast.success("Practice problem added.");
+      }
+
+      handleCancelEdit();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save problem to database");
     }
-
-    setCustomProblems(updated);
-    saveCustomProblems(updated);
-
-    // Reset fields
-    handleCancelEdit();
   };
 
 
-  const updateFlag = (key: keyof AdminFeatureFlags, value: boolean) => {
+  const updateFlag = async (key: keyof AdminFeatureFlags, value: boolean) => {
     const next = { ...featureFlags, [key]: value };
-    setFeatureFlags(next);
-    saveFeatureFlags(next);
+    try {
+      await saveFeatureFlags(next);
+      setFeatureFlags(next);
+      toast.success("Flag updated.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update feature flag.");
+    }
   };
 
   const activeFlags = Object.values(featureFlags).filter(Boolean).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-8 animate-in">

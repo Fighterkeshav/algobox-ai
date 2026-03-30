@@ -38,7 +38,25 @@ const DIFFICULTY_CONFIG = {
 };
 
 export default function Practice() {
-  const allProblems = useMemo(() => [...getCustomProblems(), ...PROBLEMS], []);
+  const [customProblems, setCustomProblems] = useState<Problem[]>([]);
+  const [isProblemsLoading, setIsProblemsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProblems = async () => {
+      try {
+        const data = await getCustomProblems();
+        setCustomProblems(data);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load practice problems.");
+      } finally {
+        setIsProblemsLoading(false);
+      }
+    };
+    fetchProblems();
+  }, []);
+
+  const allProblems = useMemo(() => [...customProblems, ...PROBLEMS], [customProblems]);
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [language, setLanguage] = useState<Language>("javascript");
@@ -196,31 +214,37 @@ export default function Practice() {
     setIsAiLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Use our new Go Serverless API for AI requests
-      const response = await fetch('/api/go/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user?.id || "anonymous",
+      const context = `Problem: ${selectedProblem.title}\n${selectedProblem.description}`;
+      
+      const { data, error } = await supabase.functions.invoke("ask-ai", {
+        body: {
           prompt: message,
-          context: `Problem: ${selectedProblem.title}\n${selectedProblem.description}`
-        })
+          context: context
+        }
       });
 
-      if (!response.ok) throw new Error("AI Service Unavailable");
+      if (error) {
+        throw error;
+      }
 
-      const data = await response.json();
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-      // Since the Go API is async (Event-Driven), we acknowledge receipt
       setChatMessages(prev => [...prev, {
         role: "assistant",
-        content: `🤖 ${data.message || "I'm analyzing your request in the background."}\n\n(This triggers an Inngest workflow!)`
+        content: data.message || "No response generated."
       }]);
 
     } catch (err: any) {
-      setChatMessages(prev => [...prev, { role: "assistant", content: `Error: ${err?.message || "Failed to connect"}` }]);
+      console.error("AI Error:", err);
+      const isRateLimit = err.message?.includes("Too many") || err.message?.includes("429") || err.status === 429;
+      setChatMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: isRateLimit 
+          ? "⚠️ You are sending messages too quickly. Please pause for a minute." 
+          : `❌ Connection error: ${err?.message || "Failed to reach AI mentor"}` 
+      }]);
     } finally {
       setIsAiLoading(false);
     }
@@ -259,6 +283,12 @@ export default function Practice() {
 
         {/* Problem List */}
         <ScrollArea className="h-[calc(100vh-100px)] sm:h-[calc(100vh-120px)]">
+          {isProblemsLoading ? (
+            <div className="flex justify-center flex-col gap-2 items-center py-12 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div className="text-sm">Loading problems...</div>
+            </div>
+          ) : (
           <div className="divide-y divide-border">
             {filteredProblems.map((problem, idx) => {
               const problemProgress = progress[problem.id];
@@ -270,7 +300,7 @@ export default function Practice() {
                 <div
                   key={problem.id}
                   onClick={() => openProblem(problem)}
-                  className="px-4 sm:px-6 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4 hover:bg-muted/30 cursor-pointer transition-colors"
+                  className="mx-2 my-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl flex items-center gap-3 sm:gap-4 hover:bg-primary/5 hover:border-primary/20 border border-transparent cursor-pointer transition-all duration-300"
                 >
                   <div className="w-4 sm:w-5 text-center flex-shrink-0">
                     {isSolved ? (
@@ -290,6 +320,7 @@ export default function Practice() {
               );
             })}
           </div>
+          )}
         </ScrollArea>
       </div>
     );
@@ -325,10 +356,10 @@ export default function Practice() {
         <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
           <div className="h-full flex flex-col border-r border-border">
             <Tabs value={descTab} onValueChange={(v) => setDescTab(v as typeof descTab)} className="flex-1 flex flex-col">
-              <TabsList className="h-10 w-full justify-start rounded-none border-b border-border bg-transparent px-4 gap-4">
-                <TabsTrigger value="description" className="text-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Description</TabsTrigger>
-                <TabsTrigger value="solutions" className="text-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Solutions</TabsTrigger>
-                <TabsTrigger value="notes" className="text-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Notes</TabsTrigger>
+              <TabsList className="h-12 w-full justify-start rounded-none border-b border-border bg-transparent px-4 gap-2">
+                <TabsTrigger value="description" className="text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg">Description</TabsTrigger>
+                <TabsTrigger value="solutions" className="text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg">Solutions</TabsTrigger>
+                <TabsTrigger value="notes" className="text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg">Notes</TabsTrigger>
               </TabsList>
 
               <TabsContent value="description" className="flex-1 overflow-auto p-4 mt-0">
@@ -476,10 +507,10 @@ export default function Practice() {
             <ResizablePanel defaultSize={35} minSize={15} maxSize={60}>
               <div className="h-full flex flex-col border-t border-border">
                 <Tabs value={outputTab} onValueChange={(v) => setOutputTab(v as typeof outputTab)} className="flex-1 flex flex-col">
-                  <TabsList className="h-9 w-full justify-start rounded-none border-b border-border bg-transparent px-4 gap-4">
-                    <TabsTrigger value="testcase" className="text-xs">Testcase</TabsTrigger>
-                    <TabsTrigger value="result" className="text-xs">Test Result</TabsTrigger>
-                    <TabsTrigger value="visualization" className="text-xs">Visualization</TabsTrigger>
+                  <TabsList className="h-11 w-full justify-start rounded-none border-b border-border bg-transparent px-4 gap-2">
+                    <TabsTrigger value="testcase" className="text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg">Testcase</TabsTrigger>
+                    <TabsTrigger value="result" className="text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg">Test Result</TabsTrigger>
+                    <TabsTrigger value="visualization" className="text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg">Visualization</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="testcase" className="flex-1 overflow-auto p-3 mt-0">
