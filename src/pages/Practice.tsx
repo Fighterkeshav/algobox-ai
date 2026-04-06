@@ -39,21 +39,14 @@ const DIFFICULTY_CONFIG = {
 
 export default function Practice() {
   const [customProblems, setCustomProblems] = useState<Problem[]>([]);
-  const [isProblemsLoading, setIsProblemsLoading] = useState(true);
+  // Never block the UI — show static problems immediately, load custom ones in bg
+  const [isProblemsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchProblems = async () => {
-      try {
-        const data = await getCustomProblems();
-        setCustomProblems(data);
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to load practice problems.");
-      } finally {
-        setIsProblemsLoading(false);
-      }
-    };
-    fetchProblems();
+    // Load custom problems silently in background — doesn't block the list
+    getCustomProblems()
+      .then(data => setCustomProblems(data))
+      .catch(err => console.error("Failed to load custom problems:", err));
   }, []);
 
   const allProblems = useMemo(() => [...customProblems, ...PROBLEMS], [customProblems]);
