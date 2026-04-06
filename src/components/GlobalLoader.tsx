@@ -4,18 +4,14 @@ import Loader from "@/components/ui/Loader";
 
 export function GlobalLoader() {
     const location = useLocation();
-    const [loading, setLoading] = useState(true); // Default true for initial load
+    const [loading, setLoading] = useState(false); // No initial load block to fix LCP/FCP metrics
+
+    // Removed initial mount delay completely to allow instant FCP
 
     useEffect(() => {
-        // Simulate loading on mount (reload)
-        const timer = setTimeout(() => setLoading(false), 2000);
-        return () => clearTimeout(timer);
-    }, []);
-
-    useEffect(() => {
-        // Simulate loading on route change
+        // Show a brief loader only on route changes to avoid blocking content
         setLoading(true);
-        const timer = setTimeout(() => setLoading(false), 800); // Shorter for nav
+        const timer = setTimeout(() => setLoading(false), 200); // Drastically reduced for UX
         return () => clearTimeout(timer);
     }, [location.pathname]);
 
