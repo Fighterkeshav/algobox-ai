@@ -25,23 +25,24 @@ export function useProgress() {
 
         const fetchAndSyncProgress = async () => {
             try {
-                // 1. Get local storage data
+                // 1. IMMEDIATELY load from localStorage (instant, no spinner)
                 const localStored = localStorage.getItem(`progress_${user.id}`);
                 const localItems: ProblemProgress[] = localStored ? JSON.parse(localStored) : [];
                 const localMap: Record<string, ProblemProgress> = {};
                 localItems.forEach(item => localMap[item.problem_id] = item);
 
-                // 2. Get Supabase data
+                // Show local data right away — no loading flash
+                setProgress(localMap);
+                setLoading(false);
+
+                // 2. Silently sync with Supabase in background
                 const { data: dbData, error } = await supabase
                     .from('problem_progress')
                     .select('*');
 
                 if (error) {
                     console.error("Error fetching progress from DB:", error);
-                    // Fallback to local
-                    setProgress(localMap);
-                    setLoading(false);
-                    return;
+                    return; // Keep local data, don't crash
                 }
 
                 const dbMap: Record<string, ProblemProgress> = {};
@@ -57,14 +58,12 @@ export function useProgress() {
                     });
                 }
 
-                // 3. Sync: If local has data but DB doesn't, push local to DB (Migration for existing users)
+                // 3. Sync: push any local-only items to DB
                 const updatesToPush: ProblemProgress[] = [];
                 Object.values(localMap).forEach(localItem => {
                     const dbItem = dbMap[localItem.problem_id];
-                    // If problem exists locally but not in DB, OR local is 'solved' but DB is not
                     if (!dbItem || (localItem.status === 'solved' && dbItem.status !== 'solved')) {
                         updatesToPush.push(localItem);
-                        // Update our 'current' view to match local (since it's newer)
                         dbMap[localItem.problem_id] = localItem;
                     }
                 });
@@ -83,16 +82,13 @@ export function useProgress() {
                     }
                 }
 
-                // 4. Set state to the merged/DB version (DB is now source of truth + synced local)
+                // 4. Update state with merged DB+local data silently
                 setProgress(dbMap);
-
-                // 5. Update localStorage to match DB (consistency)
                 localStorage.setItem(`progress_${user.id}`, JSON.stringify(Object.values(dbMap)));
 
             } catch (err) {
                 console.error("Sync error:", err);
-            } finally {
-                setLoading(false);
+                setLoading(false); // Always unblock UI
             }
         };
 
