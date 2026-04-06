@@ -56,11 +56,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
+        // Safety net: never block UI for more than 4 seconds
+        const safetyTimer = setTimeout(() => setLoading(false), 4000);
+
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
-            checkAdminStatus(session?.user?.email).finally(() => setLoading(false));
+            // Race admin check against a 2s timeout so a slow DB never blocks auth
+            const adminCheckWithTimeout = Promise.race([
+                checkAdminStatus(session?.user?.email),
+                new Promise<void>(resolve => setTimeout(resolve, 2000))
+            ]);
+            adminCheckWithTimeout.finally(() => {
+                clearTimeout(safetyTimer);
+                setLoading(false);
+            });
+        }).catch(() => {
+            clearTimeout(safetyTimer);
+            setLoading(false);
         });
 
         // Listen for auth changes
