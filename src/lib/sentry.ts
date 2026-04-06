@@ -2,7 +2,8 @@ import * as Sentry from "@sentry/react";
 
 // Initialize Sentry.io
 export const initSentry = () => {
-    if (import.meta.env.VITE_SENTRY_DSN) {
+    // Only initialize in production or if explicitly enabled to avoid ad-blocker noise in dev
+    if (import.meta.env.VITE_SENTRY_DSN && (import.meta.env.PROD || import.meta.env.VITE_ENABLE_SENTRY_DEV === 'true')) {
         Sentry.init({
             dsn: import.meta.env.VITE_SENTRY_DSN,
             integrations: [
@@ -19,7 +20,11 @@ export const initSentry = () => {
         });
         console.log("Sentry.io initialized.");
     } else {
-        console.warn("Sentry DSN not found, skipping Sentry.io initialization.");
+        if (import.meta.env.DEV) {
+            console.log("Sentry.io skipped in development (set VITE_ENABLE_SENTRY_DEV=true to enable).");
+        } else {
+            console.warn("Sentry DSN not found, skipping Sentry.io initialization.");
+        }
     }
 };
 

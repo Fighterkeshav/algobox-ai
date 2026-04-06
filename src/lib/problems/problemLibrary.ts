@@ -7,6 +7,7 @@ export interface Problem {
     difficulty: "beginner" | "intermediate" | "advanced";
     category: string;
     description: string;
+    solutionStructure?: string;
     examples: {
         input: string;
         output: string;

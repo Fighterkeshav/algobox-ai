@@ -1,137 +1,157 @@
 "use client";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { IconBrandGoogle } from "@tabler/icons-react";
+import { motion } from "framer-motion";
+import {
+  formatBlockTime,
+  getLoginBlockRemainingMs,
+  isValidEmail,
+  mapAuthErrorMessage,
+  normalizeEmail,
+  recordFailedLoginAttempt,
+  resetLoginRateLimit,
+} from "@/lib/authSecurity";
 
 export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const { signIn, signInWithGoogle } = useAuth();
-    const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signIn, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        const { error } = await signIn(email, password);
-        setLoading(false);
+  const redirectPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || "/dashboard";
 
-        if (error) {
-            toast.error(error.message);
-        } else {
-            toast.success("Logged in successfully!");
-            navigate("/dashboard");
-        }
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalizedEmail = normalizeEmail(email);
+    if (!isValidEmail(normalizedEmail)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    const blockRemainingMs = getLoginBlockRemainingMs(normalizedEmail);
+    if (blockRemainingMs > 0) {
+      toast.error(`Too many failed attempts. Try again in ${formatBlockTime(blockRemainingMs)}.`);
+      return;
+    }
+    setLoading(true);
+    const { error } = await signIn(normalizedEmail, password);
+    setLoading(false);
+    if (error) {
+      recordFailedLoginAttempt(normalizedEmail);
+      toast.error(mapAuthErrorMessage(error.message));
+    } else {
+      resetLoginRateLimit(normalizedEmail);
+      toast.success("Logged in successfully!");
+      navigate(redirectPath, { replace: true });
+    }
+  };
 
-    const handleGoogleSignIn = async () => {
-        const { error } = await signInWithGoogle();
-        if (error) {
-            toast.error(error.message);
-        }
-    };
+  const handleGoogleSignIn = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) toast.error(error.message);
+  };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-            <div className="shadow-input mx-auto w-full max-w-md rounded-2xl bg-card border border-border p-6 sm:p-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-                    Welcome Back
-                </h2>
-                <p className="mt-1.5 sm:mt-2 max-w-sm text-xs sm:text-sm text-muted-foreground">
-                    Sign in to continue your learning journey
-                </p>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Ambient glows */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/[0.06] blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 left-1/4 w-[300px] h-[300px] bg-blue-600/[0.04] blur-[100px] rounded-full" />
+      </div>
 
-                <form className="my-6 sm:my-8" onSubmit={handleSubmit}>
-                    <LabelInputContainer className="mb-3 sm:mb-4">
-                        <Label htmlFor="email" className="text-xs sm:text-sm">Email Address</Label>
-                        <Input
-                            id="email"
-                            placeholder="you@example.com"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="h-9 sm:h-10 text-sm"
-                        />
-                    </LabelInputContainer>
+      <motion.div
+        className="relative z-10 mx-auto w-full max-w-md rounded-2xl glass-card p-6 sm:p-8"
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+          Welcome Back
+        </h2>
+        <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground">
+          Sign in to continue your learning journey
+        </p>
 
-                    <LabelInputContainer className="mb-6 sm:mb-8">
-                        <Label htmlFor="password" className="text-xs sm:text-sm">Password</Label>
-                        <Input
-                            id="password"
-                            placeholder="••••••••"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="h-9 sm:h-10 text-sm"
-                        />
-                    </LabelInputContainer>
+        <form className="my-6 sm:my-8" onSubmit={handleSubmit}>
+          <LabelInputContainer className="mb-3 sm:mb-4">
+            <Label htmlFor="email" className="text-xs sm:text-sm font-medium">Email Address</Label>
+            <Input
+              id="email"
+              placeholder="you@example.com"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-10 text-sm bg-white/[0.03] border-white/[0.08] focus:border-primary/40 focus:ring-primary/20 transition-all"
+            />
+          </LabelInputContainer>
 
-                    <button
-                        className="group/btn relative block h-9 sm:h-10 w-full rounded-md bg-gradient-to-br from-primary to-primary/80 font-medium text-sm sm:text-base text-primary-foreground shadow-[0px_1px_0px_0px_rgba(255,255,255,0.1)_inset,0px_-1px_0px_0px_rgba(255,255,255,0.1)_inset] disabled:opacity-50"
-                        type="submit"
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                        ) : (
-                            <>Sign in &rarr;</>
-                        )}
-                        <BottomGradient />
-                    </button>
+          <LabelInputContainer className="mb-6 sm:mb-8">
+            <Label htmlFor="password" className="text-xs sm:text-sm font-medium">Password</Label>
+            <Input
+              id="password"
+              placeholder="••••••••"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="h-10 text-sm bg-white/[0.03] border-white/[0.08] focus:border-primary/40 focus:ring-primary/20 transition-all"
+            />
+          </LabelInputContainer>
 
-                    <div className="my-6 sm:my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+          <button
+            className="group relative block h-10 w-full rounded-lg bg-primary font-medium text-sm text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:bg-primary/90 transition-all duration-300 disabled:opacity-50"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                Sign in <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            )}
+          </button>
 
-                    <div className="flex flex-col space-y-3 sm:space-y-4">
-                        <button
-                            className="group/btn shadow-input relative flex h-9 sm:h-10 w-full items-center justify-start space-x-2 rounded-md bg-secondary px-4 font-medium text-secondary-foreground"
-                            type="button"
-                            onClick={handleGoogleSignIn}
-                        >
-                            <IconBrandGoogle className="h-4 w-4" />
-                            <span className="text-xs sm:text-sm">Continue with Google</span>
-                            <BottomGradient />
-                        </button>
-                    </div>
-                </form>
+          <div className="my-6 divider-glow" />
 
-                <p className="text-center text-xs sm:text-sm text-muted-foreground">
-                    Don't have an account?{" "}
-                    <Link to="/signup" className="text-primary hover:underline font-medium">
-                        Sign up
-                    </Link>
-                </p>
-            </div>
-        </div>
-    );
+          <button
+            className="group relative flex h-10 w-full items-center justify-center gap-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] hover:border-white/[0.15] font-medium text-sm text-foreground transition-all duration-300"
+            type="button"
+            onClick={handleGoogleSignIn}
+          >
+            <IconBrandGoogle className="h-4 w-4" />
+            <span>Continue with Google</span>
+          </button>
+        </form>
+
+        <p className="text-center text-xs sm:text-sm text-muted-foreground">
+          Don't have an account?{" "}
+          <Link to="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
+            Sign up
+          </Link>
+        </p>
+      </motion.div>
+    </div>
+  );
 }
 
-const BottomGradient = () => {
-    return (
-        <>
-            <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
-            <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 blur-sm transition duration-500 group-hover/btn:opacity-100" />
-        </>
-    );
-};
-
 const LabelInputContainer = ({
-    children,
-    className,
+  children,
+  className,
 }: {
-    children: React.ReactNode;
-    className?: string;
-}) => {
-    return (
-        <div className={cn("flex w-full flex-col space-y-2", className)}>
-            {children}
-        </div>
-    );
-};
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div className={cn("flex w-full flex-col space-y-2", className)}>
+    {children}
+  </div>
+);

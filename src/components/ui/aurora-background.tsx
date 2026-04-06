@@ -31,12 +31,12 @@ export const AuroraBackground = ({
         window.addEventListener("resize", resizeCanvas);
 
         // Particles
-        const particleCount = 50;
+        const particleCount = 30; // Reduced for minimalism
         const particles = Array.from({ length: particleCount }, () => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
-            vx: (Math.random() - 0.5) * 0.3,
-            vy: (Math.random() - 0.5) * 0.3,
+            vx: (Math.random() - 0.5) * 0.2, // Slower movement
+            vy: (Math.random() - 0.5) * 0.2,
             radius: Math.random() * 1.5 + 0.5,
             opacity: Math.random() * 0.4 + 0.1,
         }));
@@ -47,9 +47,9 @@ export const AuroraBackground = ({
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw grid
-            ctx.strokeStyle = "rgba(46, 185, 223, 0.03)";
+            ctx.strokeStyle = "rgba(0, 255, 255, 0.03)"; // Electric Cyan Grid
             ctx.lineWidth = 1;
-            const gridSize = 60;
+            const gridSize = 80; // Larger grid
             for (let x = 0; x < canvas.width; x += gridSize) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
@@ -76,7 +76,7 @@ export const AuroraBackground = ({
 
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(46, 185, 223, ${p.opacity})`;
+                ctx.fillStyle = `rgba(0, 255, 255, ${p.opacity})`; // Electric Cyan Particles
                 ctx.fill();
             });
 
@@ -90,7 +90,7 @@ export const AuroraBackground = ({
                         ctx.beginPath();
                         ctx.moveTo(p1.x, p1.y);
                         ctx.lineTo(p2.x, p2.y);
-                        ctx.strokeStyle = `rgba(46, 185, 223, ${0.05 * (1 - dist / 120)})`;
+                        ctx.strokeStyle = `rgba(0, 255, 255, ${0.05 * (1 - dist / 120)})`;
                         ctx.stroke();
                     }
                 });

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,21 @@ serve(async (req) => {
   }
 
   try {
+    const rateLimit = enforceRateLimit(req, "debug-code");
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter),
+          },
+        },
+      );
+    }
+
     const { code, error, language, problemContext, tests, skipAnalysis, executionResults, userQuestion, visualize } = await req.json();
 
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -557,40 +573,19 @@ int main() {
       );
     }
 
-    const systemPrompt = `You are an expert coding tutor specializing in debugging and algorithm implementation.
-
-Your role:
-1. Analyze the execution results and the user's code.
-2. STRICTLY respect the programming language provided. Do NOT hallucinate Python errors if the code is JavaScript/C++.
-3. Use Markdown formatting heavily:
-   - Use \`\`\`language blocks for ALL code.
-   - Use ### Headers for sections.
-   - Use **Bold** for emphasis.
-   - Ensure there are empty lines between sections for readability.
-
-Context:
-Language: ${language}
-
-Scenarios:
-A. If code is empty or just starter code:
-   - Ask the user to try writing a solution.
-   - Offer a hint about the algorithm (e.g. "Try using a hash map").
-
-B. If passed (all tests green):
-   - ### Great Job! 🎉
-   - Praise the user.
-   - ### Optimization
-   - Suggest one improvement.
-
-C. If functionality failed:
-   - ### Bug Detected 🐞
-   - Explain what went wrong.
-   - ### Fix
-   - Provide the corrected code block.
-
-Format Rules:
-- NEVER output plain text code. ALWAYS use code blocks.
-- Keep explanation concise.`;
+    const systemPrompt = `You are a world-class Staff Software Engineer and an elite debugging mentor. Your goal is to guide the user to the correct solution without merely handing them the answer.
+    
+    Goals:
+    1. Analyze the provided ${language} code, syntax errors, and the execution results.
+    2. Answer specifically what the user asked, but also address the root cause of any bugs.
+    3. Be meticulously concise. Use heavily structured Markdown.
+    
+    Output Format & Constraints:
+    - **Identify the Bug:** Briefly explain the core logical or syntax flaw in 1-2 sentences.
+    - **Complexity Analysis:** Always explicitly state the Time Complexity (Big O) and Space Complexity of their current approach, even if broken.
+    - **The Socratic Hint:** Give a powerful hint that leads them to the 'aha' moment.
+    - **Corrected Code:** ONLY if explicitly requested or if their logic is fundamentally far astray, provide a brief snippet solving the immediate block, but prioritize hints over full rewrites.
+    - **Edge Cases:** Propose 1 unique edge case that might foil their current code.`;
 
     const executionSummary = JSON.stringify(execution, null, 2);
 

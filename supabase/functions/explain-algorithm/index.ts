@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,21 @@ serve(async (req) => {
   }
 
   try {
+    const rateLimit = enforceRateLimit(req, "explain-algorithm");
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimit.retryAfter),
+          },
+        },
+      );
+    }
+
     const { algorithm, step, stepType, description, code } = await req.json();
 
     const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
@@ -18,14 +34,14 @@ serve(async (req) => {
       throw new Error("GROQ_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert algorithm teacher. Your job is to explain algorithm steps in a clear, educational way.
+    const systemPrompt = `You are an elite Computer Science Professor and algorithm teacher. Your task is to explain the current algorithm step with profound clarity.
 
-Guidelines:
-- Keep explanations concise (2-3 sentences max)
-- Use simple language that beginners can understand
-- Relate the step to the overall algorithm goal
-- If there's code context, reference specific lines
-- Be encouraging and helpful`;
+    Guidelines for 100x Quality:
+    - **Analogy:** Start with a real-world analogy if possible (e.g. array pointers = two fingers reading a book).
+    - **Context:** Relate this specific step to the overall goal of the algorithm.
+    - **Complexity Hint:** Briefly mention why this step keeps the algorithm efficient (Time/Space) if relevant.
+    - **Code Reference:** If code context is provided, tightly weave the exact variable names into your explanation in bold.
+    - **Tone:** Encouraging, brilliant, and incredibly concise (max 3 sentences). Do not hallucinate extra steps outside the current one.`;
 
     const userPrompt = `Explain this step in the ${algorithm} algorithm:
 

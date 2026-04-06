@@ -1,199 +1,86 @@
 import React, { useState } from "react";
-import { Bot, Send, Trash2, User, Loader2, Sparkles, Lightbulb } from "lucide-react";
+import { Send, Sparkles, Bot, User, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import GeneratingLoader from "@/components/ui/GeneratingLoader";
+import { Card } from "@/components/ui/card";
 
 export default function AIAssistant() {
-  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
-  const [aiInput, setAiInput] = useState("");
-  const [isAiLoading, setIsAiLoading] = useState(false);
+    const [messages, setMessages] = useState<{ role: "ai" | "user"; content: string }[]>([
+        { role: "ai", content: "Hello! I'm your AI Assistant. How can I help you today with your coding journey or algorithm practice?" }
+    ]);
+    const [input, setInput] = useState("");
 
-  const askAI = async (msg?: string) => {
-    const message = msg || aiInput.trim();
-    if (!message) return;
-    setAiInput("");
+    const handleSend = () => {
+        if (!input.trim()) return;
+        setMessages([...messages, { role: "user", content: input }]);
+        setInput("");
+        // Simulate AI response
+        setTimeout(() => {
+            setMessages(prev => [...prev, { role: "ai", content: "I'm a simulated AI Assistant for now! My brain is still being connected to the Algobox neural network." }]);
+        }, 1000);
+    };
 
-    // Add user message
-    setChatMessages((prev) => [...prev, { role: "user", content: message }]);
-    setIsAiLoading(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Use the Go Serverless API for AI requests
-      const response = await fetch('/api/go/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user?.id || "anonymous",
-          prompt: message,
-          context: `General AI Assistant Query`
-        })
-      });
-
-      if (!response.ok) throw new Error("AI Service Unavailable");
-
-      const data = await response.json();
-
-      setChatMessages((prev) => [...prev, {
-        role: "assistant",
-        content: `🤖 ${data.message || "I'm analyzing your request in the background."}`
-      }]);
-
-    } catch (err: any) {
-      setChatMessages((prev) => [...prev, { role: "assistant", content: `Error: ${err?.message || "Failed to connect"}` }]);
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  const clearChat = () => setChatMessages([]);
-
-  return (
-    <div className="h-[calc(100vh-64px)] sm:h-screen flex flex-col bg-background">
-      {/* Top Header */}
-      <div className="border-b border-border px-4 py-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold leading-none">AI Assistant</h1>
-            <p className="text-xs text-muted-foreground mt-1">Your personal coding mentor and guide</p>
-          </div>
-        </div>
-        {chatMessages.length > 0 && (
-          <Button variant="outline" size="sm" onClick={clearChat} className="h-8 text-xs">
-            <Trash2 className="h-3.5 w-3.5 mr-2" />
-            Clear Chat
-          </Button>
-        )}
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 overflow-hidden flex flex-col max-w-4xl mx-auto w-full">
-        <ScrollArea className="flex-1">
-          <div className="p-4 sm:p-6 space-y-6">
-            {chatMessages.length === 0 ? (
-              <div className="h-[50vh] flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-4">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                  <Bot className="h-8 w-8 text-primary" />
+    return (
+        <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full gap-6">
+            <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <Sparkles className="h-5 w-5 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold">How can I help you today?</h2>
-                <p className="text-muted-foreground text-sm">
-                  I can help you understand algorithms, debug your code, review patterns, or guide you through learning concepts.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full mt-8">
-                  {[
-                    "Explain Dynamic Programming",
-                    "How do I reverse a linked list?",
-                    "What's the difference between BFS and DFS?",
-                    "Review my sorting code"
-                  ].map((hint, idx) => (
-                    <Button 
-                      key={idx} 
-                      variant="outline" 
-                      className="justify-start text-xs h-auto py-3 px-4 whitespace-normal text-left"
-                      onClick={() => askAI(hint)}
-                    >
-                      <Lightbulb className="h-3.5 w-3.5 mr-2 text-amber-500 shrink-0" />
-                      {hint}
-                    </Button>
-                  ))}
+                <div>
+                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                        AI Assistant
+                    </h1>
+                    <p className="text-sm text-slate-400">Your personal coding mentor and problem-solving companion</p>
                 </div>
-              </div>
-            ) : (
-              chatMessages.map((msg, idx) => (
-                <div key={idx} className={cn("flex gap-3 sm:gap-4", msg.role === "user" ? "justify-end" : "justify-start")}>
-                  {msg.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
-                  <div className={cn(
-                    "max-w-[85%] rounded-xl px-4 py-3 shadow-sm",
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-tr-sm"
-                      : "bg-card border border-border rounded-tl-sm"
-                  )}>
-                    {msg.role === "user" ? (
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
-                    ) : (
-                      <div className="prose prose-invert prose-sm max-w-none">
-                        <ReactMarkdown
-                          components={{
-                            code: ({ node, className, children, ...props }) => {
-                              const isInline = !className;
-                              return isInline ? (
-                                <code className="bg-slate-800/50 px-1.5 py-0.5 rounded-md text-xs font-mono text-amber-200" {...props}>{children}</code>
-                              ) : (
-                                <pre className="bg-slate-900 border border-slate-800 p-4 rounded-xl overflow-x-auto text-sm my-3 shadow-inner">
-                                  <code className="font-mono" {...props}>{children}</code>
-                                </pre>
-                              );
-                            },
-                            p: ({ children }) => <p className="mb-3 text-sm leading-relaxed last:mb-0">{children}</p>,
-                            h3: ({ children }) => <h3 className="text-base font-semibold mt-4 mb-2">{children}</h3>,
-                            ul: ({ children }) => <ul className="list-disc list-inside text-sm space-y-1 mb-3">{children}</ul>,
-                            ol: ({ children }) => <ol className="list-decimal list-inside text-sm space-y-1 mb-3">{children}</ol>,
-                            strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
-                      </div>
+            </div>
+
+            <Card className="flex-1 overflow-hidden bg-slate-950/50 border-slate-800 shadow-2xl flex flex-col relative">
+                {/* Background decorative elements */}
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 z-10 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+                    {messages.map((message, idx) => (
+                        <div key={idx} className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${message.role === "ai" ? "bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/20" : "bg-gradient-to-br from-slate-600 to-slate-700"} `}>
+                                {message.role === "ai" ? <Bot className="h-4 w-4 text-white" /> : <User className="h-4 w-4 text-white" />}
+                            </div>
+                            <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 ${message.role === "user" ? "bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-600/10" : "bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-sm"}`}>
+                                <p className="leading-relaxed text-[15px]">{message.content}</p>
+                            </div>
+                        </div>
+                    ))}
+                    {messages.length % 2 === 0 && (
+                        <div className="flex gap-4 items-center text-slate-500 text-sm italic animate-pulse">
+                            <Cpu className="h-5 w-5" />
+                            AI is thinking...
+                        </div>
                     )}
-                  </div>
-                  {msg.role === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 shadow-sm">
-                      <User className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                  )}
                 </div>
-              ))
-            )}
-            {isAiLoading && (
-              <div className="flex gap-3 sm:gap-4 items-start">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
-                  <Bot className="h-4 w-4 text-primary" />
-                </div>
-                <div className="bg-card border border-border rounded-xl rounded-tl-sm px-5 py-3 min-w-[100px] flex justify-center shadow-sm">
-                  <GeneratingLoader className="scale-[0.5] origin-center m-0 h-8" />
-                </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
 
-        {/* Input Area */}
-        <div className="p-4 sm:p-6 bg-background">
-          <div className="relative">
-            <Input
-              placeholder="Ask me anything..."
-              value={aiInput}
-              onChange={(e) => setAiInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && askAI()}
-              className="pl-4 pr-12 py-6 text-sm bg-card border-2 border-border focus-visible:ring-primary focus-visible:border-primary shadow-sm rounded-xl"
-            />
-            <Button 
-              size="icon" 
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg" 
-              onClick={() => askAI()} 
-              disabled={isAiLoading || !aiInput.trim()}
-            >
-              {isAiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
-          </div>
-          <p className="text-[10px] text-center text-muted-foreground mt-2">
-            AI Assistant can make mistakes. Consider verifying important information.
-          </p>
+                <div className="p-4 bg-slate-900/80 border-t border-slate-800 backdrop-blur-md z-10">
+                    <div className="relative flex items-center max-w-4xl mx-auto">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                            placeholder="Ask any coding question or seek help with a problem..."
+                            className="w-full bg-slate-950 border border-slate-700 rounded-full pl-6 pr-14 py-4 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-inner placeholder:text-slate-500"
+                        />
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={handleSend}
+                            className={`absolute right-2 h-10 w-10 rounded-full transition-all duration-300 ${input.trim() ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:text-white" : "text-slate-500 hover:text-slate-400"}`}
+                        >
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="text-center mt-3 text-xs text-slate-500">
+                        AI Assistant can make mistakes. Verify important information.
+                    </div>
+                </div>
+            </Card>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

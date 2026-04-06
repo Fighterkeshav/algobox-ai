@@ -1,26 +1,19 @@
-import { inngest } from "../../lib/inngest/client";
+// Weekly Report function - server-side only via API
+// This module defines the event shape for frontend use
 
-export const weeklyReport = inngest.createFunction(
-    { id: "weekly-report" },
-    { event: "user.progress.updated" },
-    async ({ event, step }) => {
-        // 1. Fetch user stats
-        const stats = await step.run("fetch-user-stats", async () => {
-            // Mock DB call
-            return { totalSolved: 10, streak: 5 };
-        });
+export interface WeeklyReportEvent {
+  name: "user.progress.updated";
+  data: {
+    userId: string;
+  };
+}
 
-        // 2. Generate AI Summary (Mock)
-        const summary = await step.run("generate-ai-summary", async () => {
-            return `Great job! You maintained a ${stats.streak} day streak.`;
-        });
-
-        // 3. Send Notification (Mock)
-        await step.run("send-email", async () => {
-            console.log(`Sending email to user ${event.data.userId}: ${summary}`);
-            return { sent: true };
-        });
-
-        return { success: true, summary };
-    }
-);
+export async function sendWeeklyReportEvent(data: WeeklyReportEvent["data"]) {
+  const response = await fetch("/api/inngest-event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "user.progress.updated", data }),
+  });
+  if (!response.ok) throw new Error("Failed to send weekly report event");
+  return response.json();
+}

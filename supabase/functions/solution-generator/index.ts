@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { enforceRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,21 @@ serve(async (req) => {
     }
 
     try {
+        const rateLimit = enforceRateLimit(req, "solution-generator");
+        if (!rateLimit.allowed) {
+            return new Response(
+                JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
+                {
+                    status: 429,
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type": "application/json",
+                        "Retry-After": String(rateLimit.retryAfter),
+                    },
+                },
+            );
+        }
+
         const { problem, language } = await req.json();
 
         const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
@@ -18,11 +34,14 @@ serve(async (req) => {
             throw new Error("GROQ_API_KEY is not configured");
         }
 
-        const systemPrompt = `You are a world-class competitive programmer and algorithm expert. 
-Your task is to provide the MOST OPTIMAL solution for the given problem in ${language}.
-Your code must be clean, readable, and highly optimized for time and space complexity.
-IMPORTANT: Return ONLY the raw code. Do not wrap it in markdown backticks. Do not add explanations. Do not simple print statements unless part of the solution.
-The code must be a complete valid ${language} function/script that can be executed directly.`;
+        const systemPrompt = `You are a legendary Grandmaster competitive programmer and algorithm architect.
+Write the most unbelievably optimal valid ${language} solution for the given problem.
+
+Rules for 100x Quality:
+1. Include a top-level block comment mapping out the exact Time Complexity (O-notation) and Space Complexity and a 1-sentence explanation of the approach.
+2. Return ONLY the raw code block and the comment. No conversational filler, no markdown wrapping unless explicitly necessary around the code block itself.
+3. Code MUST be robust, handling all edge cases (empty arrays, negative constraints, zero bounds).
+4. Code must be beautifully formatted and adhere to standard styling conventions for ${language}.`;
 
         const userPrompt = `Problem Title: ${problem.title}
 Problem Description: ${problem.description}
