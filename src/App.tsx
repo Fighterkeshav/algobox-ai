@@ -25,6 +25,7 @@ import AlgorithmPicker from "./pages/AlgorithmPicker";
 import CheatSheets from "./pages/CheatSheets";
 import Community from "./pages/Community";
 import QuestionDetail from "./pages/QuestionDetail";
+import AIAssistant from "./pages/AIAssistant";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { AnalyticsListener } from "./components/AnalyticsListener";
 import { FloatingActionButtons } from "./components/FloatingActionButtons";
@@ -80,6 +81,7 @@ const App = () => (
               {/* Practice */}
               <Route path="/practice" element={<Practice />} />
               <Route path="/cyber-lab" element={<CyberLab />} />
+              <Route path="/ai-assistant" element={<AIAssistant />} />
               {/* Compete */}
               <Route path="/battle" element={<BattleMode />} />
               <Route path="/leaderboard" element={<Leaderboard />} />

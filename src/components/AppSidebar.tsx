@@ -159,7 +159,7 @@ export function AppSidebar() {
           <SidebarLink
             link={{
               label: "AI Assistant",
-              href: "/practice",
+              href: "/ai-assistant",
               icon: <Sparkles className="h-5 w-5 text-primary shrink-0" />,
             }}
             className="hover:bg-primary/10"
