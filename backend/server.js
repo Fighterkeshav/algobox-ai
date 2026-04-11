@@ -1,31 +1,57 @@
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
-// const Redis = require('ioredis');
 const visualiseRoutes = require('./routes/visualise');
 
 const app = express();
 const prisma = new PrismaClient();
-// const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
-// In-memory cache for development
 const cache = new Map();
 
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-// Middleware to attach prisma and cache to req
-app.use((req, res, next) => {
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS blocked for this origin'));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  credentials: true,
+}));
+
+app.use(express.json({ limit: '1mb' }));
+
+const requireApiKey = (req, res, next) => {
+  if (process.env.NODE_ENV !== 'production') return next();
+
+  const expected = process.env.BACKEND_API_KEY;
+  const provided = req.header('x-api-key');
+
+  if (!expected) {
+    return res.status(503).json({ error: 'Server auth not configured' });
+  }
+
+  if (provided !== expected) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  return next();
+};
+
+app.use((req, _res, next) => {
   req.prisma = prisma;
-  req.cache = cache; // req.redis = redis;
+  req.cache = cache;
   next();
 });
 
-// Routes
-app.use('/api/visualise', visualiseRoutes);
+app.use('/api/visualise', requireApiKey, visualiseRoutes);
 
-// Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 

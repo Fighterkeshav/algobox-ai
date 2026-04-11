@@ -1,18 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { enforceRateLimit } from "../_shared/rateLimit.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeadersForRequest, requireAuthenticatedUser } from "../_shared/security.ts";
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersForRequest(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const rateLimit = enforceRateLimit(req, "debug-code");
+    const user = await requireAuthenticatedUser(req);
+    const rateLimit = enforceRateLimit(req, `debug-code:${user.id}`);
     if (!rateLimit.allowed) {
       return new Response(
         JSON.stringify({ error: "Too many AI requests. Please try again shortly." }),
