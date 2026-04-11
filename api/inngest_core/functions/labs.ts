@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 // Initialize Supabase client
 const getSupabase = () => {
     const url = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !key) return null;
     return createClient(url, key);
 };

@@ -6,29 +6,16 @@ const DEFAULT_MAX_REQUESTS = Number(Deno.env.get("AI_RATE_LIMIT_MAX_REQUESTS") ?
 function getClientIdentifier(req: Request): string {
   const forwardedFor = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const realIp = req.headers.get("x-real-ip")?.trim();
-  
-  // Extract UUID or meaningful sub part from JWT instead of just "Bearer eyJhb..."
-  const authHeader = req.headers.get("authorization") || req.headers.get("apikey");
-  let authIdentifier = "anon";
-  
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    try {
-      const token = authHeader.split(" ")[1];
-      const payloadBase64 = token.split(".")[1];
-      if (payloadBase64) {
-        const payloadStr = atob(payloadBase64);
-        const payload = JSON.parse(payloadStr);
-        if (payload.sub) {
-          authIdentifier = payload.sub; // User UUID
-        }
-      }
-    } catch (e) {
-      // Fallback
-      authIdentifier = authHeader.slice(0, 24);
-    }
+  const ip = forwardedFor || realIp || "unknown";
+
+  const authHeader = req.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const tokenPrefix = authHeader.slice(7, 31);
+    return `auth:${tokenPrefix}:${ip}`;
   }
 
-  return `${authIdentifier}-${forwardedFor || realIp || "unknown"}`;
+  const apikey = req.headers.get("apikey")?.slice(0, 16) ?? "anon";
+  return `anon:${apikey}:${ip}`;
 }
 
 export function enforceRateLimit(
