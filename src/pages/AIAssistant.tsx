@@ -99,11 +99,11 @@ export default function AIAssistant() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0f1e] text-white relative">
+    <div className="flex flex-col h-full bg-[#11131a] text-white relative">
 
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-white/5">
-        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
           <Sparkles className="h-4 w-4 text-white" />
         </div>
         <div>
@@ -122,7 +122,7 @@ export default function AIAssistant() {
           /* ── Empty State ── */
           <div className="flex flex-col items-center justify-center h-full gap-8 px-4 pb-8">
             <div className="text-center">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-indigo-500/30">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-indigo-500/30">
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">How can I help you today?</h2>
@@ -138,7 +138,7 @@ export default function AIAssistant() {
                   onClick={() => handleSend(p.text)}
                   className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/15 p-4 text-left transition-all duration-200 group"
                 >
-                  <div className="mt-0.5 shrink-0 text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                  <div className="mt-0.5 shrink-0 text-cyan-400 group-hover:text-cyan-300 transition-colors">
                     {p.icon}
                   </div>
                   <span className="text-sm text-slate-300 group-hover:text-white transition-colors leading-snug">
@@ -157,7 +157,7 @@ export default function AIAssistant() {
                 <div className={cn(
                   "h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-1",
                   msg.role === "ai"
-                    ? "bg-gradient-to-br from-indigo-500 to-violet-600 shadow-md shadow-indigo-500/20"
+                    ? "bg-gradient-to-br from-cyan-500 to-blue-600 shadow-md shadow-indigo-500/20"
                     : "bg-white/10 border border-white/10"
                 )}>
                   {msg.role === "ai"
@@ -169,8 +169,8 @@ export default function AIAssistant() {
                 <div className={cn(
                   "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
                   msg.role === "user"
-                    ? "bg-indigo-600 text-white rounded-tr-sm"
-                    : "bg-white/[0.06] border border-white/8 text-slate-200 rounded-tl-sm"
+                    ? "bg-cyan-600/90 text-white rounded-tr-sm"
+                    : "bg-white/[0.04] border border-white/10 text-slate-200 rounded-tl-sm"
                 )}>
                   {msg.role === "user" ? (
                     <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -181,7 +181,7 @@ export default function AIAssistant() {
                       prose-h2:text-sm prose-h2:font-semibold prose-h2:mb-1
                       prose-h3:text-sm prose-h3:font-semibold prose-h3:mb-1
                       prose-ul:my-1 prose-ol:my-1 prose-li:my-0
-                      prose-strong:text-indigo-300
+                      prose-strong:text-cyan-300
                       prose-pre:p-0 prose-pre:bg-transparent prose-pre:my-2">
                       <ReactMarkdown
                         components={{
@@ -199,7 +199,7 @@ export default function AIAssistant() {
                                 {String(children).replace(/\n$/, "")}
                               </SyntaxHighlighter>
                             ) : (
-                              <code className="bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
+                              <code className="bg-indigo-500/20 text-cyan-300 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
                                 {children}
                               </code>
                             );
@@ -217,7 +217,7 @@ export default function AIAssistant() {
             {/* Typing indicator */}
             {isLoading && (
               <div className="flex gap-3">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 mt-1 shadow-md shadow-indigo-500/20">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0 mt-1 shadow-md shadow-indigo-500/20">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div className="bg-white/[0.06] border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3">
@@ -237,7 +237,7 @@ export default function AIAssistant() {
           <div className={cn(
             "relative flex items-end gap-3 rounded-2xl border px-4 py-3 transition-all duration-200",
             input.length > 0 || isLoading
-              ? "border-indigo-500/50 bg-white/[0.04] shadow-lg shadow-indigo-500/10"
+              ? "border-cyan-500/40 bg-white/[0.04] shadow-lg shadow-cyan-500/10"
               : "border-white/10 bg-white/[0.03] hover:border-white/20"
           )}>
             <textarea
@@ -256,7 +256,7 @@ export default function AIAssistant() {
               className={cn(
                 "shrink-0 h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-200",
                 input.trim() && !isLoading
-                  ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/30 scale-100"
+                  ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-500/30 scale-100"
                   : "bg-white/5 text-slate-600 cursor-not-allowed scale-95"
               )}
             >
@@ -265,7 +265,7 @@ export default function AIAssistant() {
                 : <ArrowUp className="h-4 w-4" />}
             </button>
           </div>
-          <p className="text-center text-[11px] text-slate-600 mt-2">
+          <p className="text-center text-[11px] text-slate-500 mt-2">
             AlgoBox AI uses the Socratic method — it guides, not spoils.
           </p>
         </div>
