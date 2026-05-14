@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/logo.png" />
+  <!-- AlgoBox AI Configuration -->
+  <title>AlgoBox AI</title>
+  <meta name="description" content="Interactive Algorithm Visualizer and Learning Platform" />
+  <meta name="author" content="AlgoBox" />
+
+  <meta property="og:title" content="AlgoBox AI" />
+  <meta property="og:description" content="Interactive Algorithm Visualizer and Learning Platform" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/og-image.png" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@AlgoBoxAI" />
+  <meta name="twitter:image" content="/og-image.png" />
+</head>
+
+<body>
+  <div id="root">
+    <style>
+      .app-initial-loader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+        background-color: #020617; /* match slate-950 roughly */
+        color: white;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      .app-initial-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top-color: #6366f1; /* indigo-500 */
+        animation: spin 1s ease-in-out infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    <div class="app-initial-loader">
+      <div class="app-initial-spinner"></div>
+      <div>Loading AlgoBox AI...</div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

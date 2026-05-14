@@ -1,0 +1,21 @@
+npm error code ERESOLVE
+npm error ERESOLVE unable to resolve dependency tree
+npm error
+npm error While resolving: vite_react_shadcn_ts@0.0.0
+npm error Found: zod@3.25.76
+npm error node_modules/zod
+npm error   zod@"^3.25.76" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer zod@"3.22.3" from @remotion/zod-types@4.0.410
+npm error node_modules/@remotion/zod-types
+npm error   @remotion/zod-types@"^4.0.409" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error C:\Users\pc\AppData\Local\npm-cache\_logs\2026-01-27T13_57_01_714Z-eresolve-report.txt
+npm error A complete log of this run can be found in: C:\Users\pc\AppData\Local\npm-cache\_logs\2026-01-27T13_57_01_714Z-debug-0.log
